@@ -492,7 +492,7 @@ portfolio_results = []
 trail_list = []
 
 # ⚠️ TEST MODE — comment out when done testing
-TEST_MODE = True
+TEST_MODE = False
 symbols = [
 
 # OIL & GAS
@@ -2064,6 +2064,7 @@ actions_payload = {
     "wait": wait_list,
     "exit": exit_list,
     "watch": watch_list,
+
     "trail": trail_list,
 }
 
