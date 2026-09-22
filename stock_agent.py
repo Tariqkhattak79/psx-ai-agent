@@ -487,34 +487,7 @@ MAX_POSITION_PKR = TOTAL_INVESTMENT * (MAX_POSITION_PCT / 100)
 
 
 print(f"Risk per trade: PKR {round(RISK_PER_TRADE_PKR, 2)} ({RISK_PER_TRADE_PCT}%)")
-try:
-    with open("live_market_data.json", "r") as file:
-        live_market_data = json.load(file)
-
-    print("LIVE MARKET DATA LOADED")
-
-except Exception:
-
-    print("LIVE DATA FAILED - USING BACKUP SOURCE")
-
-    try:
-        with open("backup_market_data.json", "r") as file:
-            backup_data = json.load(file)
-
-        live_market_data = []
-
-    except Exception:
-
-        print("BACKUP SOURCE FAILED")
-
-        live_market_data = []
-
-live_price_map = {
-    row["Symbol"]: row["Price"]
-    for row in live_market_data
-    if isinstance(row, dict)
-    and row.get("Price") is not None
-}
+live_price_map = {}
 portfolio_results = []
 
 
@@ -916,23 +889,27 @@ for news in news_results:
 for symbol in symbols:
 
     data = None
+    live_price = None
 
-    # Try yfinance first
+    # Try yfinance for historical
     try:
-        data = yf.Ticker(symbol + ".KA").history(period="1y")
-        if data is None or len(data) == 0:
-            data = None
+        yf_data = yf.Ticker(symbol + ".KA").history(period="1y")
+        if yf_data is not None and len(yf_data) > 0:
+            data = yf_data
     except Exception:
-        data = None
+        pass
 
-    # Fallback to psxdata
-    if data is None:
-        try:
-            import psxdata
-            psx_df = psxdata.stocks(symbol)
+    # Always fetch latest price from psxdata
+    try:
+        import psxdata
+        psx_df = psxdata.stocks(symbol)
 
-            if psx_df is not None and len(psx_df) > 0:
-                # Normalize to yfinance-style
+        if psx_df is not None and len(psx_df) > 0:
+            # Latest row (dates descending in psxdata)
+            live_price = round(float(psx_df.iloc[0]["close"]), 2)
+
+            # If yfinance failed, use psxdata for historical too
+            if data is None:
                 psx_df = psx_df.rename(columns={
                     "date": "Date",
                     "open": "Open",
@@ -944,13 +921,15 @@ for symbol in symbols:
                 psx_df["Date"] = pd.to_datetime(psx_df["Date"])
                 psx_df = psx_df.sort_values("Date").set_index("Date")
                 data = psx_df[["Open", "High", "Low", "Close", "Volume"]].tail(252)
-                print(f"{symbol} | Using psxdata fallback ({len(data)} rows)")
-        except Exception as e:
-            print(f"{symbol} | psxdata failed: {e}")
-            data = None
+    except Exception:
+        pass
 
     if data is None or len(data) < 50:
         continue
+
+    # Fallback to saved map (shouldn't be needed)
+    if live_price is None:
+        live_price = live_price_map.get(symbol)
 
     data["MA20"] = data["Close"].rolling(20).mean()
     data["MA50"] = data["Close"].rolling(50).mean()
@@ -1375,7 +1354,6 @@ for symbol in symbols:
 
     buy_price = round(latest["Close"], 2)
     
-    live_price = live_price_map.get(symbol)
 
     stop_loss = round(
         buy_price - (atr * 2),
@@ -1587,7 +1565,7 @@ for symbol in symbols:
         "Symbol": symbol,
         "Sector": sector_map.get(symbol, "Other"),
         "Close": buy_price,
-    "LivePrice": live_price_map.get(symbol),
+    "LivePrice": live_price,
         "RSI": round(rsi, 2),
         "RS": round(relative_strength, 2),
         "Confidence": confidence,
