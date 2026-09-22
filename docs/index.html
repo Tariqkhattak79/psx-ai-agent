@@ -234,6 +234,9 @@ function readyCard(a) {
         <span>${a.Shares} shares</span>
       </div>
       <div class="row2">
+        <span>📍 ${a.Zone}</span>
+      </div>
+      <div class="row2">
         <span>🎯 T1: ${a.Target1}</span>
         <span>🛑 Stop: ${a.StopLoss}</span>
       </div>
@@ -241,7 +244,6 @@ function readyCard(a) {
     </div>
   `;
 }
-
 function waitCard(w) {
   return `
     <div class="card wait">
