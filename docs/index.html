@@ -77,6 +77,10 @@
     <div id="long_list"></div>
   </div>
   <div class="section">
+    <div class="section-title" style="color:#ff9933">📉 TRAIL STOPS</div>
+    <div id="trail_list"></div>
+  </div>
+  <div class="section">
     <div class="section-title yellow">🟡 WAIT FOR PULLBACK</div>
     <div id="wait_list"></div>
   </div>
@@ -181,6 +185,30 @@ function renderSections() {
   document.getElementById("exit_list").innerHTML = exit.length
     ? exit.map(e => exitCard(e)).join("")
     : "<div class='card'>No exits — portfolio healthy</div>";
+
+  // TRAIL STOPS
+  const trail = ALL_ACTIONS.trail || [];
+  document.getElementById("trail_list").innerHTML = trail.length
+    ? trail.map(t => trailCard(t)).join("")
+    : "<div class='card'>No trailing stops yet — positions haven't moved up +3%</div>";
+}
+
+function trailCard(t) {
+  return `
+    <div class="card" style="border-color:#ff9933">
+      <div class="row1">
+        <span class="sym">${t.Symbol}</span>
+        <span class="badge" style="background:#ff9933">+${t.PLPercent}%</span>
+      </div>
+      <div class="row2">
+        <span>Buy: PKR ${t.BuyPrice}</span>
+        <span>Now: PKR ${t.CurrentPrice}</span>
+      </div>
+      <div class="row2">
+        <span style="color:#ff9933">📍 Trail Stop: PKR ${t.TrailingStop}</span>
+      </div>
+    </div>
+  `;
 }
 
 function cardHTML(sym, price, shares, target, stop, conf, reasons, cls) {

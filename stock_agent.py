@@ -489,6 +489,7 @@ MAX_POSITION_PKR = TOTAL_INVESTMENT * (MAX_POSITION_PCT / 100)
 print(f"Risk per trade: PKR {round(RISK_PER_TRADE_PKR, 2)} ({RISK_PER_TRADE_PCT}%)")
 live_price_map = {}
 portfolio_results = []
+trail_list = []
 
 # ⚠️ TEST MODE — comment out when done testing
 TEST_MODE = True
@@ -1213,9 +1214,11 @@ for symbol in symbols:
     recent_low = data["Low"].tail(10).min()
 
     support = round(data["Low"].tail(20).min(), 2)
+    support_5d = round(data["Low"].tail(5).min(), 2)
 
     resistance = round(data["High"].tail(20).max(), 2)
-
+    resistance_10d = round(data["High"].tail(10).max(), 2)
+    resistance_20d = resistance
     accumulation = (
         current_volume > avg_volume * 1.2
         and rsi > 45
@@ -1359,20 +1362,46 @@ for symbol in symbols:
     buy_price = round(latest["Close"], 2)
     
 
-    stop_loss = round(
-        buy_price - (atr * 2),
-        2
-    )
+    # ==================================
+    # STOP LOSS — 3-Way Blend
+    # ==================================
 
-    target1 = round(
-        buy_price + (atr * 3),
-        2
-    )
+    stop_1 = support_5d * 0.98          # below 5-day low
+    stop_2 = buy_price - (atr * 1.5)     # ATR floor
+    stop_3 = recent_low * 0.99           # below 10-day low
 
-    target2 = round(
-        buy_price + (atr * 5),
-        2
-    )
+    stop_loss = max(stop_1, stop_2, stop_3)
+    stop_loss = min(stop_loss, buy_price * 0.97)
+    stop_loss = max(stop_loss, buy_price * 0.92)
+    stop_loss = round(stop_loss, 2)
+
+    # ==================================
+    # TARGETS — Resistance + R:R Floor
+    # ==================================
+
+    risk = buy_price - stop_loss
+    if risk <= 0:
+        risk = buy_price * 0.03
+
+    if resistance_10d >= buy_price * 1.03:
+        target1 = resistance_10d
+    else:
+        target1 = buy_price * 1.08
+
+    if (target1 - buy_price) / risk < 1.5:
+        target1 = buy_price + (risk * 1.5)
+
+    target1 = round(target1, 2)
+
+    if resistance_20d > target1 * 1.02:
+        target2 = resistance_20d
+    else:
+        target2 = buy_price + (risk * 2.5)
+
+    if target2 <= target1:
+        target2 = round(target1 * 1.05, 2)
+
+    target2 = round(target2, 2)
     # ---- Entry Price Range (Buy Zone) ----
     if signal in ["BUY", "STRONG BUY"]:
         buy_zone_low = round(
@@ -1389,13 +1418,63 @@ for symbol in symbols:
         buy_zone_high = None
         buy_zone_note = ""
 
-    risk = buy_price - stop_loss
-
+    # R:R recomputed with new targets
     reward = target1 - buy_price
+    rr_ratio = round(reward / risk, 2) if risk > 0 else 0
 
-    rr_ratio = round(reward / risk, 2)
-    confidence = min(score * 20, 100)
-    
+    confidence = min(score * 20, 100) 
+    # ==================================
+    # ENTRY QUALITY SCORE
+    # ==================================
+
+    entry_score = 0
+
+    room_up = (resistance_10d - buy_price) / buy_price if buy_price > 0 else 0
+    room_down = (buy_price - stop_loss) / buy_price if buy_price > 0 else 0
+
+    if room_down > 0:
+        if room_up >= 2 * room_down:
+            entry_score += 2
+        elif room_up >= 1.5 * room_down:
+            entry_score += 1
+
+    rr_t1 = (target1 - buy_price) / (buy_price - stop_loss) if stop_loss < buy_price else 0
+
+    if rr_t1 >= 2.0:
+        entry_score += 2
+    elif rr_t1 >= 1.5:
+        entry_score += 1
+
+    if 45 <= rsi <= 60:
+        entry_score += 1
+    elif rsi < 70:
+        entry_score += 0.5
+
+    if bullish_divergence == "YES":
+        entry_score += 1
+
+    if volume_status in ("VOLUME SPIKE", "HIGH VOLUME"):
+        entry_score += 1
+
+    # Tier
+    if entry_score >= 5:
+        entry_tier = "EXCELLENT"
+    elif entry_score >= 3.5:
+        entry_tier = "GOOD"
+    elif entry_score >= 2:
+        entry_tier = "OK"
+    else:
+        entry_tier = "POOR"
+
+    # R:R tier
+    if rr_ratio >= 2.0:
+        rr_tier = "EXCELLENT"
+    elif rr_ratio >= 1.5:
+        rr_tier = "GOOD"
+    elif rr_ratio >= 1.0:
+        rr_tier = "OK"
+    else:
+        rr_tier = "POOR"   
 
     pattern = ""
 
@@ -1600,7 +1679,12 @@ for symbol in symbols:
         "Support": support,
         "Resistance": resistance,
         "RR": rr_ratio,
-
+        "RRTier": rr_tier,
+        "EntryScore": entry_score,
+        "EntryTier": entry_tier,
+        "Support5d": support_5d,
+        "Resistance10d": resistance_10d,
+        "Resistance20d": resistance_20d,
     
     
         "StopLoss": stop_loss,
@@ -1618,6 +1702,15 @@ for symbol in symbols:
     })
 
 df = pd.DataFrame(results)
+
+# Populate live price map from df (for portfolio section below)
+for _, r in df.iterrows():
+    lp = r.get("LivePrice")
+    if lp is not None:
+        try:
+            live_price_map[r["Symbol"]] = float(lp)
+        except (TypeError, ValueError):
+            pass
 
 sector_rank = (
     df.groupby("Sector")["Confidence"]
@@ -1897,21 +1990,29 @@ for _, r in df.iterrows():
             continue
 
     # BUY NOW
-    if sig in ("BUY", "STRONG BUY") and rsi < 70 and len(reasons) >= 3:
+    if (sig in ("BUY", "STRONG BUY")
+        and rsi < 70
+        and len(reasons) >= 3
+        and r.get("EntryTier") in ("GOOD", "EXCELLENT")):
         buy_now.append({
             "Symbol": sym,
             "Price": round(r["Close"], 2),
             "Shares": int(r["PositionSize"]),
             "Target1": r["Target1"],
+            "Target2": r["Target2"],
             "StopLoss": r["StopLoss"],
             "Confidence": conf,
-            "Reasons": reasons
+            "Reasons": reasons,
+            "EntryTier": r["EntryTier"],
+            "RRTier": r["RRTier"],
+            "RR": r["RR"]
         })
         continue
-    # READY TO BUY (price inside buy zone, 2+ reasons)
+    # READY TO BUY (OK or better tier + price inside zone)
     if (sig in ("BUY", "STRONG BUY")
         and rsi < 70
         and len(reasons) >= 2
+        and r.get("EntryTier") in ("OK", "GOOD", "EXCELLENT")
         and r["BuyZoneLow"] is not None
         and r["BuyZoneHigh"] is not None
         and r["BuyZoneLow"] <= r["Close"] <= r["BuyZoneHigh"]):
@@ -1922,12 +2023,15 @@ for _, r in df.iterrows():
             "Zone": r["BuyZoneNote"],
             "Shares": int(r["PositionSize"]),
             "Target1": r["Target1"],
+            "Target2": r["Target2"],
             "StopLoss": r["StopLoss"],
             "Confidence": conf,
-            "Reasons": reasons
+            "Reasons": reasons,
+            "EntryTier": r["EntryTier"],
+            "RRTier": r["RRTier"],
+            "RR": r["RR"]
         })
         continue
-
     # WAIT
     if sig in ("BUY", "STRONG BUY") and r["BuyZoneNote"]:
         wait_list.append({
@@ -1959,7 +2063,8 @@ actions_payload = {
     "ready": ready_list,
     "wait": wait_list,
     "exit": exit_list,
-    "watch": watch_list
+    "watch": watch_list,
+    "trail": trail_list,
 }
 
 with open("psx_actions.json", "w") as f:
@@ -1988,6 +2093,11 @@ for a in wait_list[:10]:
 print(f"\n🔴 EXIT ({len(exit_list)})")
 for a in exit_list:
     print(f"  {a['Symbol']:6} @ {a['Price']:>9} | P/L: {a['LossPct']}% | {a['Reason']}")
+
+print(f"\n📉 TRAILING STOPS ({len(trail_list)})")
+for t in trail_list:
+    print(f"  {t['Symbol']:6} | Buy: {t['BuyPrice']:>9} | Now: {t['CurrentPrice']:>9} | "
+          f"Trail: {t['TrailingStop']:>9} | P/L: {t['PLPercent']}%")
 
 print(f"\n👀 WATCH ({len(watch_list)})")
 for a in watch_list[:10]:
@@ -2269,6 +2379,32 @@ for index, row in portfolio.iterrows():
 
     elif profit_pct >= 20:
         exit_alert = "EXIT ALERT - LOCK PROFITS"
+
+    # ==================================
+    # TRAILING STOP — 5-day low based
+    # ==================================
+    trailing_stop = None
+    if not stock_row.empty:
+        try:
+            sup5 = float(stock_row.iloc[0]["Support5d"])
+            trail_candidate = round(sup5 * 0.99, 2)
+        except (TypeError, ValueError, KeyError):
+            trail_candidate = None
+
+        if (trail_candidate is not None
+                and profit_pct >= 3
+                and trail_candidate > buy_price
+                and trail_candidate < current_price):
+            trailing_stop = trail_candidate
+
+    if trailing_stop is not None:
+        trail_list.append({
+            "Symbol": symbol,
+            "BuyPrice": round(buy_price, 2),
+            "CurrentPrice": round(current_price, 2),
+            "TrailingStop": trailing_stop,
+            "PLPercent": profit_pct
+        })
     
 
     print(
