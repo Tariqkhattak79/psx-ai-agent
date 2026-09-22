@@ -184,6 +184,10 @@ function renderSections() {
 }
 
 function cardHTML(sym, price, shares, target, stop, conf, reasons, cls) {
+  // Look up zone from ALL_REPORT
+  const full = ALL_REPORT.find(x => x.Symbol === sym);
+  const zone = full && full.BuyZoneNote ? full.BuyZoneNote : "";
+
   return `
     <div class="card ${cls}">
       <div class="row1">
@@ -194,6 +198,7 @@ function cardHTML(sym, price, shares, target, stop, conf, reasons, cls) {
         <span class="price">PKR ${price}</span>
         <span>${shares} shares</span>
       </div>
+      ${zone ? `<div class="row2"><span>📍 ${zone}</span></div>` : ""}
       <div class="row2">
         <span>🎯 T1: ${target}</span>
         <span>🛑 Stop: ${stop}</span>
@@ -202,7 +207,6 @@ function cardHTML(sym, price, shares, target, stop, conf, reasons, cls) {
     </div>
   `;
 }
-
 function styleCard(r, cls) {
   return `
     <div class="card ${cls}">
