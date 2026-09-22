@@ -103,7 +103,7 @@ def detect_portfolio_changes(current_portfolio):
         file_exists = os.path.exists(HISTORY_FILE)
 
         import csv
-            with open(HISTORY_FILE, "a", newline="", encoding="utf-8") as f:
+        with open(HISTORY_FILE, "a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(
                 f,
                 fieldnames=["Date", "Symbol", "Type", "Shares", "Price", "Note"]
