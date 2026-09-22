@@ -103,7 +103,7 @@ def detect_portfolio_changes(current_portfolio):
         file_exists = os.path.exists(HISTORY_FILE)
 
         import csv
-        with open(HISTORY_FILE, "a", newline="") as f:
+            with open(HISTORY_FILE, "a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(
                 f,
                 fieldnames=["Date", "Symbol", "Type", "Shares", "Price", "Note"]
@@ -249,7 +249,7 @@ def log_signal_history(df_today):
     # Load existing history, drop today's old entries (avoid duplicates)
     existing = []
     if os.path.exists(SIGNAL_HISTORY_FILE):
-        with open(SIGNAL_HISTORY_FILE, "r") as f:
+        with open(SIGNAL_HISTORY_FILE, "r", encoding="utf-8", errors="replace") as f:
             reader = csv.DictReader(f)
             existing = [row for row in reader if row["Date"] != today]
 
@@ -260,7 +260,7 @@ def log_signal_history(df_today):
         "Target1", "BuyZone"
     ]
 
-    with open(SIGNAL_HISTORY_FILE, "w", newline="") as f:
+    with open(SIGNAL_HISTORY_FILE, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for row in existing:
@@ -295,13 +295,12 @@ def log_portfolio_value(total_investment, total_current_value, portfolio_pl):
 
     existing = []
     if os.path.exists(VALUE_HISTORY_FILE):
-        with open(VALUE_HISTORY_FILE, "r") as f:
+        with open(VALUE_HISTORY_FILE, "r", encoding="utf-8", errors="replace") as f:
             reader = csv.DictReader(f)
             existing = [row for row in reader if row["Date"] != today]
-
     fieldnames = ["Date", "Investment", "CurrentValue", "ReturnPct"]
 
-    with open(VALUE_HISTORY_FILE, "w", newline="") as f:
+    with open(VALUE_HISTORY_FILE, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for row in existing:
@@ -399,7 +398,7 @@ def calculate_trade_stats():
     if not os.path.exists(HISTORY_FILE):
         return None
 
-    with open(HISTORY_FILE, "r") as f:
+    with open(HISTORY_FILE, "r", encoding="utf-8", errors="replace") as f:
         rows = list(csv.DictReader(f))
 
     # Group by symbol
