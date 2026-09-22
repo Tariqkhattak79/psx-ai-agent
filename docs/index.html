@@ -184,9 +184,10 @@ function renderSections() {
 }
 
 function cardHTML(sym, price, shares, target, stop, conf, reasons, cls) {
-  // Look up zone from ALL_REPORT
   const full = ALL_REPORT.find(x => x.Symbol === sym);
   const zone = full && full.BuyZoneNote ? full.BuyZoneNote : "";
+  const tier = full && full.EntryTier ? full.EntryTier : "";
+  const rr   = full && full.RR ? full.RR : "";
 
   return `
     <div class="card ${cls}">
@@ -194,6 +195,7 @@ function cardHTML(sym, price, shares, target, stop, conf, reasons, cls) {
         <span class="sym">${sym}</span>
         <span class="badge ${cls}">${conf}%</span>
       </div>
+      ${(tier || rr) ? `<div class="row2"><span>Tier: ${tier}</span><span>R:R ${rr}</span></div>` : ""}
       <div class="row2">
         <span class="price">PKR ${price}</span>
         <span>${shares} shares</span>
@@ -227,12 +229,15 @@ function styleCard(r, cls) {
   `;
 }
 function readyCard(a) {
+  const tier = a.EntryTier || "";
+  const rr   = a.RR || "";
   return `
     <div class="card buy">
       <div class="row1">
         <span class="sym">${a.Symbol}</span>
         <span class="badge buy">${a.Confidence}%</span>
       </div>
+      ${(tier || rr) ? `<div class="row2"><span>Tier: ${tier}</span><span>R:R ${rr}</span></div>` : ""}
       <div class="row2">
         <span class="price">PKR ${a.Price}</span>
         <span>${a.Shares} shares</span>
