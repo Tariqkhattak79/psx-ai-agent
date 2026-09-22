@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSX Elite Scanner</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", sans-serif; background: #0a0a0a; color: #eee; margin: 0; padding: 12px; padding-bottom: 80px; }
+  h1 { font-size: 18px; margin: 0 0 8px 0; }
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .status { font-size: 12px; color: #888; }
+  .stats { display: flex; gap: 8px; margin-bottom: 16px; }
+  .stat { flex: 1; background: #1a1a1a; padding: 10px; border-radius: 8px; text-align: center; }
+  .stat-num { font-size: 20px; font-weight: bold; }
+  .stat-label { font-size: 10px; color: #888; text-transform: uppercase; }
+  .green { color: #44cc44; }
+  .red { color: #ff4444; }
+  .yellow { color: #ffcc44; }
+  .section { margin-bottom: 20px; }
+  .section-title { font-size: 15px; font-weight: bold; margin-bottom: 8px; padding: 8px 0; border-bottom: 1px solid #222; }
+  .card { background: #1a1a1a; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #333; }
+  .card.strong { border-left-color: #00cc00; background: #0d1a0d; }
+  .card.buy { border-left-color: #44cc44; background: #0d170d; }
+  .card.short { border-left-color: #3399ff; background: #0d1219; }
+  .card.long { border-left-color: #9955cc; background: #130d19; }
+  .card.wait { border-left-color: #ffcc44; background: #191610; }
+  .card.exit { border-left-color: #ff2222; background: #1a0d0d; }
+  .row1 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .sym { font-size: 16px; font-weight: bold; }
+  .badge { font-size: 10px; padding: 3px 8px; border-radius: 12px; background: #333; font-weight: bold; }
+  .badge.strong { background: #00aa00; }
+  .badge.buy { background: #44aa44; color: #000; }
+  .badge.short { background: #3399ff; }
+  .badge.long { background: #9955cc; }
+  .badge.wait { background: #ccaa00; color: #000; }
+  .badge.exit { background: #cc2222; }
+  .row2 { font-size: 13px; color: #ccc; margin-top: 6px; display: flex; justify-content: space-between; }
+  .price { font-size: 14px; font-weight: bold; color: #fff; }
+  .reason { font-size: 11px; color: #888; margin-top: 6px; font-style: italic; }
+  button { background: #0066cc; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a1a; display: flex; padding: 8px; border-top: 1px solid #333; }
+  .bottom-nav button { flex: 1; background: transparent; color: #888; }
+  .bottom-nav button.active { color: #fff; }
+  .hidden { display: none; }
+  .search-box { width: 100%; padding: 12px; font-size: 14px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #fff; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1>⚡ PSX Elite</h1>
+  <button onclick="loadData()">🔄</button>
+</div>
+<div class="status" id="status">Loading...</div>
+<div class="status" id="updated"></div>
+
+<div class="stats" id="stats"></div>
+
+<div id="view-home">
+  <div class="section">
+    <div class="section-title green">🟢 BUY NOW</div>
+    <div id="buy_now"></div>
+  </div>
+  <div class="section">
+    <div class="section-title" style="color:#3399ff">⚡ SHORT-TERM SWING</div>
+    <div id="short_list"></div>
+  </div>
+  <div class="section">
+    <div class="section-title" style="color:#9955cc">📈 LONG-TERM</div>
+    <div id="long_list"></div>
+  </div>
+  <div class="section">
+    <div class="section-title yellow">🟡 WAIT FOR PULLBACK</div>
+    <div id="wait_list"></div>
+  </div>
+  <div class="section">
+    <div class="section-title red">🔴 EXIT</div>
+    <div id="exit_list"></div>
+  </div>
+</div>
+
+<div id="view-search" class="hidden">
+  <input type="text" class="search-box" id="search_input" placeholder="Search symbol (e.g. NETSOL)" oninput="searchStock()">
+  <div id="search_results"></div>
+</div>
+
+<div class="bottom-nav">
+  <button id="nav-home" class="active" onclick="showView('home')">🏠 Home</button>
+  <button id="nav-search" onclick="showView('search')">🔍 Search</button>
+  <button onclick="loadData()">🔄 Refresh</button>
+</div>
+
+<script>
+const SUPABASE_URL = "https://lmuwpfejzzfsagkjddui.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtdXdwZmVqenpmc2Fna2pkZHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNTU0MTQsImV4cCI6MjEwNTYzMTQxNH0.ENHKw9MgCVzZwK8nvVGLaNBILoKeZvGMvgOv5HUvODI";
+const params = new URLSearchParams(window.location.search);
+const USER_ID = params.get("user") || "TariqUsman";
+
+let ALL_REPORT = [];
+let ALL_ACTIONS = {};
+
+async function loadData() {
+  document.getElementById("status").textContent = "Fetching...";
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/signals?user_id=eq.${USER_ID}&select=data,updated_at`;
+    const res = await fetch(url, {
+      headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rows = await res.json();
+    if (!rows.length) throw new Error("No data for user " + USER_ID);
+
+    const data = rows[0].data;
+    ALL_REPORT = data.report || [];
+    ALL_ACTIONS = data.actions || {};
+
+    document.getElementById("status").textContent = "✅ " + USER_ID;
+    document.getElementById("updated").textContent = "Updated: " + new Date(rows[0].updated_at).toLocaleString();
+
+    renderStats();
+    renderSections();
+  } catch (e) {
+    document.getElementById("status").textContent = "❌ " + e.message;
+  }
+}
+
+function renderStats() {
+  const buy = ALL_ACTIONS.buy_now || [];
+  const wait = ALL_ACTIONS.wait || [];
+  const exit = ALL_ACTIONS.exit || [];
+  const watch = ALL_ACTIONS.watch || [];
+
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><div class="stat-num green">${buy.length}</div><div class="stat-label">Buy</div></div>
+    <div class="stat"><div class="stat-num yellow">${wait.length}</div><div class="stat-label">Wait</div></div>
+    <div class="stat"><div class="stat-num red">${exit.length}</div><div class="stat-label">Exit</div></div>
+    <div class="stat"><div class="stat-num">${watch.length}</div><div class="stat-label">Watch</div></div>
+  `;
+}
+
+function renderSections() {
+  // BUY NOW
+  const buy = ALL_ACTIONS.buy_now || [];
+  document.getElementById("buy_now").innerHTML = buy.length
+    ? buy.slice(0, 10).map(a => cardHTML(a.Symbol, a.Price, a.Shares, a.Target1, a.StopLoss, a.Confidence, a.Reasons, "strong")).join("")
+    : "<div class='card'>No buy signals today</div>";
+
+  // Separate SHORT/LONG from full report
+  const shortStocks = ALL_REPORT.filter(r => r.TradeStyle === "SHORT" && (r.Signal === "BUY" || r.Signal === "STRONG BUY"));
+  const longStocks = ALL_REPORT.filter(r => r.TradeStyle === "LONG" && (r.Signal === "BUY" || r.Signal === "STRONG BUY"));
+
+  document.getElementById("short_list").innerHTML = shortStocks.length
+    ? shortStocks.slice(0, 6).map(r => styleCard(r, "short")).join("")
+    : "<div class='card'>No short-term setups today</div>";
+
+  document.getElementById("long_list").innerHTML = longStocks.length
+    ? longStocks.slice(0, 6).map(r => styleCard(r, "long")).join("")
+    : "<div class='card'>No long-term setups today</div>";
+
+  // WAIT
+  const wait = ALL_ACTIONS.wait || [];
+  document.getElementById("wait_list").innerHTML = wait.length
+    ? wait.slice(0, 10).map(w => waitCard(w)).join("")
+    : "<div class='card'>No waiting setups</div>";
+
+  // EXIT
+  const exit = ALL_ACTIONS.exit || [];
+  document.getElementById("exit_list").innerHTML = exit.length
+    ? exit.map(e => exitCard(e)).join("")
+    : "<div class='card'>No exits — portfolio healthy</div>";
+}
+
+function cardHTML(sym, price, shares, target, stop, conf, reasons, cls) {
+  return `
+    <div class="card ${cls}">
+      <div class="row1">
+        <span class="sym">${sym}</span>
+        <span class="badge ${cls}">${conf}%</span>
+      </div>
+      <div class="row2">
+        <span class="price">PKR ${price}</span>
+        <span>${shares} shares</span>
+      </div>
+      <div class="row2">
+        <span>🎯 T1: ${target}</span>
+        <span>🛑 Stop: ${stop}</span>
+      </div>
+      <div class="reason">↳ ${reasons.join(", ")}</div>
+    </div>
+  `;
+}
+
+function styleCard(r, cls) {
+  return `
+    <div class="card ${cls}">
+      <div class="row1">
+        <span class="sym">${r.Symbol}</span>
+        <span class="badge ${cls}">${r.TradeStyle}</span>
+      </div>
+      <div class="row2">
+        <span class="price">PKR ${r.Close}</span>
+        <span>Score: ${Math.round(r.MasterScore)}</span>
+      </div>
+      <div class="row2">
+        <span>🎯 T1: ${r.Target1}</span>
+        <span>🛑 ${r.StopLoss}</span>
+      </div>
+      <div class="reason">↳ ${r.StyleReason} | RSI ${r.RSI}</div>
+    </div>
+  `;
+}
+
+function waitCard(w) {
+  return `
+    <div class="card wait">
+      <div class="row1">
+        <span class="sym">${w.Symbol}</span>
+        <span class="badge wait">WAIT</span>
+      </div>
+      <div class="row2">
+        <span class="price">${w.BuyZone}</span>
+      </div>
+      <div class="reason">Confidence: ${w.Confidence}%</div>
+    </div>
+  `;
+}
+
+function exitCard(e) {
+  return `
+    <div class="card exit">
+      <div class="row1">
+        <span class="sym">${e.Symbol}</span>
+        <span class="badge exit">EXIT</span>
+      </div>
+      <div class="row2">
+        <span class="price">PKR ${e.Price}</span>
+        <span class="red">${e.LossPct}%</span>
+      </div>
+      <div class="reason">↳ ${e.Reason}</div>
+    </div>
+  `;
+}
+
+function showView(name) {
+  document.getElementById("view-home").classList.toggle("hidden", name !== "home");
+  document.getElementById("view-search").classList.toggle("hidden", name !== "search");
+  document.getElementById("nav-home").classList.toggle("active", name === "home");
+  document.getElementById("nav-search").classList.toggle("active", name === "search");
+}
+
+function searchStock() {
+  const q = document.getElementById("search_input").value.toUpperCase().trim();
+  const box = document.getElementById("search_results");
+
+  if (q.length < 2) { box.innerHTML = ""; return; }
+
+  const matches = ALL_REPORT.filter(r => r.Symbol.toUpperCase().includes(q));
+
+  if (!matches.length) {
+    box.innerHTML = "<div class='card'>No match found</div>";
+    return;
+  }
+
+  box.innerHTML = matches.slice(0, 5).map(r => searchResultCard(r)).join("");
+}
+
+function searchResultCard(r) {
+  const cls = r.Signal === "STRONG BUY" ? "strong" : r.Signal === "BUY" ? "buy" : "wait";
+  return `
+    <div class="card ${cls}">
+      <div class="row1">
+        <span class="sym">${r.Symbol}</span>
+        <span class="badge ${cls}">${r.Signal}</span>
+      </div>
+      <div class="row2">
+        <span>Live: PKR ${r.LivePrice || r.Close}</span>
+        <span>RSI: ${r.RSI}</span>
+      </div>
+      <div class="row2">
+        <span>Buy Zone: ${r.BuyZoneNote || "N/A"}</span>
+      </div>
+      <div class="row2">
+        <span>🎯 T1: ${r.Target1}</span>
+        <span>🛑 ${r.StopLoss}</span>
+      </div>
+      <div class="row2">
+        <span>Phase: ${r.Pattern || "—"}</span>
+        <span>Style: ${r.TradeStyle}</span>
+      </div>
+      <div class="row2">
+        <span>Smart Money: ${r.SmartMoneyConfidence}</span>
+        <span>Trend: ${r.TrendStatus}</span>
+      </div>
+      <div class="reason">↳ ${r.StyleReason}</div>
+    </div>
+  `;
+}
+
+// Auto-refresh every 15 min
+setInterval(loadData, 15 * 60 * 1000);
+
+loadData();
+</script>
+
+</body>
+</html>
