@@ -65,6 +65,10 @@
     <div id="buy_now"></div>
   </div>
   <div class="section">
+    <div class="section-title" style="color:#88dd44">🟩 READY TO BUY</div>
+    <div id="ready_list"></div>
+  </div>
+  <div class="section">
     <div class="section-title" style="color:#3399ff">⚡ SHORT-TERM SWING</div>
     <div id="short_list"></div>
   </div>
@@ -135,6 +139,7 @@ function renderStats() {
 
   document.getElementById("stats").innerHTML = `
     <div class="stat"><div class="stat-num green">${buy.length}</div><div class="stat-label">Buy</div></div>
+    <div class="stat"><div class="stat-num" style="color:#88dd44">${(ALL_ACTIONS.ready || []).length}</div><div class="stat-label">Ready</div></div>
     <div class="stat"><div class="stat-num yellow">${wait.length}</div><div class="stat-label">Wait</div></div>
     <div class="stat"><div class="stat-num red">${exit.length}</div><div class="stat-label">Exit</div></div>
     <div class="stat"><div class="stat-num">${watch.length}</div><div class="stat-label">Watch</div></div>
@@ -147,6 +152,11 @@ function renderSections() {
   document.getElementById("buy_now").innerHTML = buy.length
     ? buy.slice(0, 10).map(a => cardHTML(a.Symbol, a.Price, a.Shares, a.Target1, a.StopLoss, a.Confidence, a.Reasons, "strong")).join("")
     : "<div class='card'>No buy signals today</div>";
+  // READY TO BUY
+  const ready = ALL_ACTIONS.ready || [];
+  document.getElementById("ready_list").innerHTML = ready.length
+    ? ready.slice(0, 10).map(a => readyCard(a)).join("")
+    : "<div class='card'>No ready-to-buy setups today</div>";
 
   // Separate SHORT/LONG from full report
   const shortStocks = ALL_REPORT.filter(r => r.TradeStyle === "SHORT" && (r.Signal === "BUY" || r.Signal === "STRONG BUY"));
@@ -209,6 +219,25 @@ function styleCard(r, cls) {
         <span>🛑 ${r.StopLoss}</span>
       </div>
       <div class="reason">↳ ${r.StyleReason} | RSI ${r.RSI}</div>
+    </div>
+  `;
+}
+function readyCard(a) {
+  return `
+    <div class="card buy">
+      <div class="row1">
+        <span class="sym">${a.Symbol}</span>
+        <span class="badge buy">${a.Confidence}%</span>
+      </div>
+      <div class="row2">
+        <span class="price">PKR ${a.Price}</span>
+        <span>${a.Shares} shares</span>
+      </div>
+      <div class="row2">
+        <span>🎯 T1: ${a.Target1}</span>
+        <span>🛑 Stop: ${a.StopLoss}</span>
+      </div>
+      <div class="reason">↳ ${a.Reasons.join(", ")}</div>
     </div>
   `;
 }

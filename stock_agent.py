@@ -490,7 +490,8 @@ print(f"Risk per trade: PKR {round(RISK_PER_TRADE_PKR, 2)} ({RISK_PER_TRADE_PCT}
 live_price_map = {}
 portfolio_results = []
 
-
+# ⚠️ TEST MODE — comment out when done testing
+TEST_MODE = True
 symbols = [
 
 # OIL & GAS
@@ -550,6 +551,9 @@ symbols = [
 "BNL","GTYR","SPSL"
 
 ]
+
+if TEST_MODE:
+    symbols = ["NETSOL", "LUCK", "NCL", "ENGRO", "SPSL", "BNL", "GTYR"]
 sector_map = {
     "OGDC":"Oil & Gas",
     "PPL":"Oil & Gas",
@@ -1862,9 +1866,11 @@ def evaluate_reasons(r):
 
 
 buy_now = []
+ready_list = []
 wait_list = []
 exit_list = []
 watch_list = []
+
 
 held_symbols = {
     r["Symbol"]: {"BuyPrice": float(r["BuyPrice"]), "Shares": int(r["Shares"])}
@@ -1902,6 +1908,25 @@ for _, r in df.iterrows():
             "Reasons": reasons
         })
         continue
+    # READY TO BUY (price inside buy zone, 2+ reasons)
+    if (sig in ("BUY", "STRONG BUY")
+        and rsi < 70
+        and len(reasons) >= 2
+        and r["BuyZoneLow"] is not None
+        and r["BuyZoneHigh"] is not None
+        and r["BuyZoneLow"] <= r["Close"] <= r["BuyZoneHigh"]):
+
+        ready_list.append({
+            "Symbol": sym,
+            "Price": round(r["Close"], 2),
+            "Zone": r["BuyZoneNote"],
+            "Shares": int(r["PositionSize"]),
+            "Target1": r["Target1"],
+            "StopLoss": r["StopLoss"],
+            "Confidence": conf,
+            "Reasons": reasons
+        })
+        continue
 
     # WAIT
     if sig in ("BUY", "STRONG BUY") and r["BuyZoneNote"]:
@@ -1924,12 +1949,14 @@ for _, r in df.iterrows():
 
 # Sort by confidence
 buy_now.sort(key=lambda x: -x["Confidence"])
+ready_list.sort(key=lambda x: -x["Confidence"])
 wait_list.sort(key=lambda x: -x["Confidence"])
 
 # Save to JSON
 actions_payload = {
     "generated": datetime.now().isoformat(),
     "buy_now": buy_now,
+    "ready": ready_list,
     "wait": wait_list,
     "exit": exit_list,
     "watch": watch_list
@@ -1942,6 +1969,13 @@ print("\n=== TODAY'S ACTIONS ===")
 
 print(f"\n🟢 BUY NOW ({len(buy_now)})")
 for a in buy_now[:10]:
+    print(f"  {a['Symbol']:6} @ {a['Price']:>9} | {a['Shares']:>5} sh | "
+          f"T1: {a['Target1']:>9} | Stop: {a['StopLoss']:>9} | "
+          f"Conf: {a['Confidence']}%")
+    print(f"         ↳ {', '.join(a['Reasons'])}")
+
+print(f"\n🟩 READY TO BUY ({len(ready_list)})")
+for a in ready_list[:10]:
     print(f"  {a['Symbol']:6} @ {a['Price']:>9} | {a['Shares']:>5} sh | "
           f"T1: {a['Target1']:>9} | Stop: {a['StopLoss']:>9} | "
           f"Conf: {a['Confidence']}%")
