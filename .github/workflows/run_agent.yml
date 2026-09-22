@@ -1,0 +1,29 @@
+name: PSX Agent
+
+on:
+  schedule:
+    - cron: '*/15 4-10 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run PSX Agent
+        env:
+          GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE: ${{ secrets.SUPABASE_PUBLISHABLE }}
+          SUPABASE_SECRET: ${{ secrets.SUPABASE_SECRET }}
+          PSX_USER_ID: ${{ secrets.PSX_USER_ID }}
+        run: python stock_agent.py

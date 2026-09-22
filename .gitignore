@@ -1,0 +1,7 @@
+venv/
+.env
+__pycache__/
+*.pyc
+*.log
+live_market_data.json
+backup_market_data.json
