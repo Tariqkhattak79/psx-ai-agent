@@ -811,7 +811,7 @@ def analyze_news(headline):
         "declines",
         "hike",
         "hikes",
-	"depreciates",
+    "depreciates",
         "depreciation",
         "crisis",
         "loss",
@@ -1587,44 +1587,44 @@ for symbol in symbols:
         "Symbol": symbol,
         "Sector": sector_map.get(symbol, "Other"),
         "Close": buy_price,
-	"LivePrice": live_price_map.get(symbol),
+    "LivePrice": live_price_map.get(symbol),
         "RSI": round(rsi, 2),
         "RS": round(relative_strength, 2),
         "Confidence": confidence,
         "Score": score,
         "Signal": signal,
-	"MTFScore": mtf_score,
+    "MTFScore": mtf_score,
 
         "VolumeStatus": volume_status,
         "BreakoutStatus": breakout_status,
         "BullishDivergence": bullish_divergence,
-	"BearishDivergence": bearish_divergence,
+    "BearishDivergence": bearish_divergence,
 
-	"OpportunityScore": opportunity_score,
+    "OpportunityScore": opportunity_score,
         "MomentumScore": momentum_score,
         "LongTermScore": long_term_score,
-	
-	"TrendStatus": trend_status,
+    
+    "TrendStatus": trend_status,
         "BreakoutStrength": breakout_strength,
-	"SmartMoneyConfidence": smart_money_confidence,
+    "SmartMoneyConfidence": smart_money_confidence,
 
 
-	"SmartMoneyConfidence": smart_money_confidence,
-	"MarketTrend": market_trend,
+    "SmartMoneyConfidence": smart_money_confidence,
+    "MarketTrend": market_trend,
   
         "EntryTiming": entry_timing,
-	"PullbackScore": pullback_score,
+    "PullbackScore": pullback_score,
         "Pattern": pattern,
         "Support": support,
         "Resistance": resistance,
         "RR": rr_ratio,
 
-	
-	
+    
+    
         "StopLoss": stop_loss,
         "Target1": target1,
         "Target2": target2,
-	"LiquiditySweep": "YES" if liquidity_sweep_buy else "NO",
+    "LiquiditySweep": "YES" if liquidity_sweep_buy else "NO",
         "BuyZoneLow": buy_zone_low,
         "BuyZoneHigh": buy_zone_high,
         "BuyZoneNote": buy_zone_note,
@@ -1793,7 +1793,7 @@ print(
             "OpportunityScore",
             "MomentumScore",
             "LongTermScore",
-	    "EntryTiming",
+        "EntryTiming",
             "PullbackScore"
         ]
     ].head(10)
