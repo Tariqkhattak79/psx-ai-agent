@@ -26,4 +26,5 @@ jobs:
           SUPABASE_PUBLISHABLE: ${{ secrets.SUPABASE_PUBLISHABLE }}
           SUPABASE_SECRET: ${{ secrets.SUPABASE_SECRET }}
           PSX_USER_ID: ${{ secrets.PSX_USER_ID }}
-        run: python stock_agent.py
+        run: |
+          python stock_agent.py || (echo '{"status":"fail","reason":"script crashed"}' > last_run_status.json && exit 1)

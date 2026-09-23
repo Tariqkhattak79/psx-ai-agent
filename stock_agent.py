@@ -1,3 +1,4 @@
+
 import yfinance as yf
 import pandas as pd
 import json
@@ -8,6 +9,56 @@ from email.message import EmailMessage
 from dotenv import load_dotenv
 
 load_dotenv()
+# ==================================
+# ENGINE FAILURE ALERT (start)
+# ==================================
+import os, json, smtplib
+from email.message import EmailMessage
+from datetime import datetime
+
+STATUS_FILE = "last_run_status.json"
+
+def _send_failure_email(reason):
+    try:
+        sender = os.getenv("GMAIL_SENDER")
+        pw = os.getenv("GMAIL_APP_PASSWORD")
+        if not sender or not pw:
+            print("⚠️ Cannot send failure email — missing Gmail creds")
+            return
+        msg = EmailMessage()
+        msg["Subject"] = "🚨 PSX Agent — 2 runs failed in a row"
+        msg["From"] = sender
+        msg["To"] = sender
+        msg.set_content(
+            f"PSX Agent has failed 2 runs in a row.\n\n"
+            f"Last error time: {datetime.now().isoformat()}\n"
+            f"Reason: {reason}\n\n"
+            f"Check: https://github.com/tariqkhattak79/psx-ai-agent/actions\n"
+        )
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(sender, pw)
+            smtp.send_message(msg)
+        print("🚨 Failure alert email sent.")
+    except Exception as e:
+        print(f"⚠️ Could not send failure email: {e}")
+
+def check_previous_run():
+    """If the previous run failed, warn by email."""
+    if not os.path.exists(STATUS_FILE):
+        return
+    try:
+        with open(STATUS_FILE, "r") as f:
+            prev = json.load(f)
+        if prev.get("status") == "fail":
+            _send_failure_email(prev.get("reason", "unknown"))
+    except Exception as e:
+        print(f"⚠️ Could not read status file: {e}")
+
+check_previous_run()
+# ==================================
+# ENGINE FAILURE ALERT (end)
+# ==================================
+
 
 GMAIL_SENDER = os.getenv("GMAIL_SENDER")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
@@ -493,7 +544,7 @@ trail_list = []
 partial_list = []
 
 # ⚠️ TEST MODE — comment out when done testing
-TEST_MODE = False
+TEST_MODE = True
 symbols = [
 
 # OIL & GAS
@@ -2646,4 +2697,16 @@ try:
 except Exception:
     report_for_upload = []
 
-upload_to_supabase(USER_ID, actions_for_upload, report_for_upload)   
+upload_to_supabase(USER_ID, actions_for_upload, report_for_upload)
+
+
+# Write OK status
+try:
+    with open(STATUS_FILE, "w") as f:
+        json.dump({
+            "status": "ok",
+            "timestamp": datetime.now().isoformat()
+        }, f)
+    print("✅ Run status: ok")
+except Exception as e:
+    print(f"⚠️ Could not write status: {e}")
