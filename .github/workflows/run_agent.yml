@@ -4,7 +4,8 @@ on:
   schedule:
     - cron: '*/15 4-10 * * 1-5'
   workflow_dispatch:
-
+permissions:
+  contents: write
 jobs:
   run-agent:
     runs-on: ubuntu-latest
@@ -28,3 +29,13 @@ jobs:
           PSX_USER_ID: ${{ secrets.PSX_USER_ID }}
         run: |
           python stock_agent.py || (echo '{"status":"fail","reason":"script crashed"}' > last_run_status.json && exit 1)
+
+
+      - name: Commit history CSVs back
+        if: always()
+        run: |
+          git config user.name "psx-agent-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add signal_history.csv portfolio_value_history.csv portfolio_history.csv portfolio_snapshot.json 2>/dev/null || true
+          git diff --quiet --cached || git commit -m "Auto: history update $(date -u +'%Y-%m-%d %H:%M')"
+          git push || true

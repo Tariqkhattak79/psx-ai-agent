@@ -5,10 +5,6 @@ __pycache__/
 *.log
 live_market_data.json
 backup_market_data.json
-signal_history.csv
-portfolio_value_history.csv
-portfolio_history.csv
-portfolio_snapshot.json
 psx_actions.json
 psx_report.json
 psx_report.xlsx
