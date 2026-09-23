@@ -16,3 +16,7 @@ psx_news_impact.xlsx
 out.txt
 *_working_v1.py
 *_working_v1.html
+last_run_status.json
+git add .gitignore
+git commit -m "Ignore last_run_status.json"
+git push
