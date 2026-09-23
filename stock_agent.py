@@ -2136,7 +2136,7 @@ actions_payload = {
     "watch": watch_list,
 
     "trail": trail_list,
-    "partial": partial_list
+    "partial": partial_list,
 }
 
 with open("psx_actions.json", "w") as f:
@@ -2563,8 +2563,17 @@ for index, row in portfolio.iterrows():
 
     portfolio_results.append({
         "Symbol": symbol,
+        "Shares": int(shares),
+        "BuyPrice": round(buy_price, 2),
+        "CurrentPrice": round(current_price, 2),
         "PLPercent": profit_pct,
-        "Action": rebalance_action
+        "Action": rebalance_action,
+        "Signal": signal if not stock_row.empty else "-",
+        "MasterScore": round(master_score, 2) if not stock_row.empty else 0,
+        "StopAction": stop_action,
+        "SellAlert": sell_alert,
+        "StopLossAlert": stop_loss_alert,
+        "ExitAlert": exit_alert
     })
     # -----------------------------------
 print("\n=== PORTFOLIO SUMMARY ===")
@@ -2679,6 +2688,28 @@ for index, row in portfolio.iterrows():
     )
 
     print(f"{symbol} : {allocation}%")
+
+# ==================================
+# RE-WRITE actions_payload WITH PORTFOLIO
+# ==================================
+actions_payload["portfolio"] = portfolio_results
+actions_payload["portfolio_summary"] = {
+    "TotalInvestment": round(TOTAL_INVESTMENT, 2),
+    "CurrentValue": round(total_current_value, 2),
+    "ReturnPct": portfolio_pl,
+    "Winners": winning_positions,
+    "Losers": losing_positions,
+    "Best": best_stock,
+    "BestPct": round(best_return, 2),
+    "Worst": worst_stock,
+    "WorstPct": round(worst_return, 2)
+}
+
+with open("psx_actions.json", "w") as f:
+    json.dump(actions_payload, f, indent=4)
+
+print(f"✅ Re-wrote psx_actions.json with portfolio data")
+
 # ==================================
 # UPLOAD TO SUPABASE
 # ==================================

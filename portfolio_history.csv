@@ -1,7 +1,8 @@
 Date,Symbol,Type,Shares,Price,Note
-2026-09-23,BNL,BUY,9000,6.63,new position
-2026-09-23,GTYR,BUY,5500,34.45,new position
-2026-09-23,HUBC,BUY,250,213.07,new position
-2026-09-23,LUCK,BUY,1300,447.06,new position
-2026-09-23,SPSL,BUY,18900,18.29,new position
-2026-09-23,SYS,BUY,500,123.72,new position
+2026-09-21,BNL,BUY,8500,6.63,new position
+2026-09-21,GTYR,BUY,5500,34.45,new position
+2026-09-21,HUBC,BUY,250,213.07,new position
+2026-09-21,LUCK,BUY,1300,447.06,new position
+2026-09-21,SPSL,BUY,18900,18.29,new position
+2026-09-21,SYS,BUY,500,123.72,new position
+2026-09-21,BNL,BUY,500,6.63,added shares

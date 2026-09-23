@@ -19,8 +19,12 @@
   .green { color: #44cc44; }
   .red { color: #ff4444; }
   .yellow { color: #ffcc44; }
-  .section { margin-bottom: 20px; }
-  .section-title { font-size: 15px; font-weight: bold; margin-bottom: 8px; padding: 8px 0; border-bottom: 1px solid #222; }
+  .section { margin-bottom: 12px; }
+  .section-title { font-size: 15px; font-weight: bold; padding: 12px 10px; background: #1a1a1a; border-radius: 8px; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; }
+  .section-title::after { content: "▾"; font-size: 12px; opacity: 0.6; transition: transform 0.15s; }
+  .section.open .section-title::after { transform: rotate(180deg); }
+  .section-body { display: none; padding-top: 8px; }
+  .section.open .section-body { display: block; }
   .card { background: #1a1a1a; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #333; }
   .card.strong { border-left-color: #00cc00; background: #0d1a0d; }
   .card.buy { border-left-color: #44cc44; background: #0d170d; }
@@ -60,33 +64,41 @@
 <div class="stats" id="stats"></div>
 
 <div id="view-home">
-  <div class="section">
-    <div class="section-title green">🟢 BUY NOW</div>
-    <div id="buy_now"></div>
+  <div class="section" id="sec_buy">
+    <div class="section-title green" onclick="toggleSection('sec_buy')">🟢 BUY NOW</div>
+    <div class="section-body"><div id="buy_now"></div></div>
   </div>
-  <div class="section">
-    <div class="section-title" style="color:#88dd44">🟩 READY TO BUY</div>
-    <div id="ready_list"></div>
+  <div class="section" id="sec_ready">
+    <div class="section-title" style="color:#88dd44" onclick="toggleSection('sec_ready')">🟩 READY TO BUY</div>
+    <div class="section-body"><div id="ready_list"></div></div>
   </div>
-  <div class="section">
-    <div class="section-title" style="color:#3399ff">⚡ SHORT-TERM SWING</div>
-    <div id="short_list"></div>
+  <div class="section" id="sec_short">
+    <div class="section-title" style="color:#3399ff" onclick="toggleSection('sec_short')">⚡ SHORT-TERM SWING</div>
+    <div class="section-body"><div id="short_list"></div></div>
   </div>
-  <div class="section">
-    <div class="section-title" style="color:#9955cc">📈 LONG-TERM</div>
-    <div id="long_list"></div>
+  <div class="section" id="sec_long">
+    <div class="section-title" style="color:#9955cc" onclick="toggleSection('sec_long')">📈 LONG-TERM</div>
+    <div class="section-body"><div id="long_list"></div></div>
   </div>
-  <div class="section">
-    <div class="section-title" style="color:#ff9933">📉 TRAIL STOPS</div>
-    <div id="trail_list"></div>
+  <div class="section" id="sec_trail">
+    <div class="section-title" style="color:#ff9933" onclick="toggleSection('sec_trail')">📉 TRAIL STOPS</div>
+    <div class="section-body"><div id="trail_list"></div></div>
   </div>
-  <div class="section">
-    <div class="section-title yellow">🟡 WAIT FOR PULLBACK</div>
-    <div id="wait_list"></div>
+  <div class="section" id="sec_portfolio">
+    <div class="section-title" style="color:#00cc99" onclick="toggleSection('sec_portfolio')">💼 PORTFOLIO</div>
+    <div class="section-body">
+      <div id="portfolio_summary"></div>
+      <div class="section-title" style="color:#ff9933;font-size:14px;margin-top:10px">⚙️ TRADE MANAGEMENT</div>
+      <div id="trade_manage_list"></div>
+    </div>
   </div>
-  <div class="section">
-    <div class="section-title red">🔴 EXIT</div>
-    <div id="exit_list"></div>
+  <div class="section" id="sec_wait">
+    <div class="section-title yellow" onclick="toggleSection('sec_wait')">🟡 WAIT FOR PULLBACK</div>
+    <div class="section-body"><div id="wait_list"></div></div>
+  </div>
+  <div class="section" id="sec_exit">
+    <div class="section-title red" onclick="toggleSection('sec_exit')">🔴 EXIT</div>
+    <div class="section-body"><div id="exit_list"></div></div>
   </div>
 </div>
 
@@ -109,6 +121,10 @@ const USER_ID = params.get("user") || "TariqUsman";
 
 let ALL_REPORT = [];
 let ALL_ACTIONS = {};
+
+function toggleSection(id) {
+  document.getElementById(id).classList.toggle("open");
+}
 
 async function loadData() {
   document.getElementById("status").textContent = "Fetching...";
@@ -151,18 +167,16 @@ function renderStats() {
 }
 
 function renderSections() {
-  // BUY NOW
   const buy = ALL_ACTIONS.buy_now || [];
   document.getElementById("buy_now").innerHTML = buy.length
     ? buy.slice(0, 10).map(a => cardHTML(a.Symbol, a.Price, a.Shares, a.Target1, a.StopLoss, a.Confidence, a.Reasons, "strong")).join("")
     : "<div class='card'>No buy signals today</div>";
-  // READY TO BUY
+
   const ready = ALL_ACTIONS.ready || [];
   document.getElementById("ready_list").innerHTML = ready.length
     ? ready.slice(0, 10).map(a => readyCard(a)).join("")
     : "<div class='card'>No ready-to-buy setups today</div>";
 
-  // Separate SHORT/LONG from full report
   const shortStocks = ALL_REPORT.filter(r => r.TradeStyle === "SHORT" && (r.Signal === "BUY" || r.Signal === "STRONG BUY"));
   const longStocks = ALL_REPORT.filter(r => r.TradeStyle === "LONG" && (r.Signal === "BUY" || r.Signal === "STRONG BUY"));
 
@@ -174,23 +188,94 @@ function renderSections() {
     ? longStocks.slice(0, 6).map(r => styleCard(r, "long")).join("")
     : "<div class='card'>No long-term setups today</div>";
 
-  // WAIT
   const wait = ALL_ACTIONS.wait || [];
   document.getElementById("wait_list").innerHTML = wait.length
     ? wait.slice(0, 10).map(w => waitCard(w)).join("")
     : "<div class='card'>No waiting setups</div>";
 
-  // EXIT
   const exit = ALL_ACTIONS.exit || [];
   document.getElementById("exit_list").innerHTML = exit.length
     ? exit.map(e => exitCard(e)).join("")
     : "<div class='card'>No exits — portfolio healthy</div>";
 
-  // TRAIL STOPS
   const trail = ALL_ACTIONS.trail || [];
   document.getElementById("trail_list").innerHTML = trail.length
     ? trail.map(t => trailCard(t)).join("")
     : "<div class='card'>No trailing stops yet — positions haven't moved up +3%</div>";
+
+  const sum = ALL_ACTIONS.portfolio_summary || {};
+  const pList = ALL_ACTIONS.portfolio || [];
+
+  document.getElementById("portfolio_summary").innerHTML = pList.length
+    ? `<div class="card" style="border-color:#00cc99">
+         <div class="row1">
+           <span class="sym">Portfolio</span>
+           <span class="badge" style="background:${sum.ReturnPct >= 0 ? '#22aa22' : '#cc3333'}">${sum.ReturnPct >= 0 ? '+' : ''}${sum.ReturnPct}%</span>
+         </div>
+         <div class="row2">
+           <span>Invested: PKR ${sum.TotalInvestment}</span>
+           <span>Value: PKR ${sum.CurrentValue}</span>
+         </div>
+         <div class="row2">
+           <span>🟢 ${sum.Winners}</span>
+           <span>🔴 ${sum.Losers}</span>
+         </div>
+       </div>`
+    : "";
+
+  document.getElementById("trade_manage_list").innerHTML = pList.length
+    ? pList.map(p => tradeManageCard(p)).join("")
+    : "<div class='card'>No holdings to manage</div>";
+}
+function tradeManageCard(p) {
+  const color = p.PLPercent >= 0 ? "#22aa22" : "#cc3333";
+  const stop = p.StopLossAlert && p.StopLossAlert !== "NO STOP LOSS ALERT" ? p.StopLossAlert : "—";
+  const exit = p.ExitAlert && p.ExitAlert !== "NO EXIT ALERT" ? p.ExitAlert : "—";
+  const sell = p.SellAlert && p.SellAlert !== "NO SELL ALERT" ? p.SellAlert : "—";
+  return `
+    <div class="card" style="border-color:${color}">
+      <div class="row1">
+        <span class="sym">${p.Symbol}</span>
+        <span class="badge" style="background:${color}">${p.PLPercent >= 0 ? '+' : ''}${p.PLPercent}%</span>
+      </div>
+      <div class="row2">
+        <span>Buy: ${p.BuyPrice}</span>
+        <span>Now: ${p.CurrentPrice}</span>
+      </div>
+      <div class="row2">
+        <span>${p.Shares} shares</span>
+        <span>${p.Action}</span>
+      </div>
+      <div class="reason">Stop: ${stop}</div>
+      <div class="reason">Exit: ${exit}</div>
+      <div class="reason">Sell: ${sell}</div>
+    </div>
+  `;
+}
+
+function portfolioCard(p) {
+  const color = p.PLPercent >= 0 ? "#22aa22" : "#cc3333";
+  const alertTxt = p.ExitAlert && p.ExitAlert !== "NO EXIT ALERT" ? p.ExitAlert
+                  : p.StopLossAlert && p.StopLossAlert !== "NO STOP LOSS ALERT" ? p.StopLossAlert
+                  : p.SellAlert && p.SellAlert !== "NO SELL ALERT" ? p.SellAlert
+                  : p.Action;
+  return `
+    <div class="card" style="border-color:${color}">
+      <div class="row1">
+        <span class="sym">${p.Symbol}</span>
+        <span class="badge" style="background:${color}">${p.PLPercent >= 0 ? '+' : ''}${p.PLPercent}%</span>
+      </div>
+      <div class="row2">
+        <span>Buy: ${p.BuyPrice}</span>
+        <span>Now: ${p.CurrentPrice}</span>
+      </div>
+      <div class="row2">
+        <span>${p.Shares} shares</span>
+        <span>${p.Action}</span>
+      </div>
+      <div class="reason">↳ ${alertTxt}</div>
+    </div>
+  `;
 }
 
 function trailCard(t) {
@@ -237,6 +322,7 @@ function cardHTML(sym, price, shares, target, stop, conf, reasons, cls) {
     </div>
   `;
 }
+
 function styleCard(r, cls) {
   return `
     <div class="card ${cls}">
@@ -256,6 +342,7 @@ function styleCard(r, cls) {
     </div>
   `;
 }
+
 function readyCard(a) {
   const tier = a.EntryTier || "";
   const rr   = a.RR || "";
@@ -281,6 +368,7 @@ function readyCard(a) {
     </div>
   `;
 }
+
 function waitCard(w) {
   return `
     <div class="card wait">
