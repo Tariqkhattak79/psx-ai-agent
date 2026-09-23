@@ -544,7 +544,7 @@ trail_list = []
 partial_list = []
 
 # ⚠️ TEST MODE — comment out when done testing
-TEST_MODE = True
+TEST_MODE = False
 symbols = [
 
 # OIL & GAS
