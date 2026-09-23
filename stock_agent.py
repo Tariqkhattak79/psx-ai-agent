@@ -490,6 +490,7 @@ print(f"Risk per trade: PKR {round(RISK_PER_TRADE_PKR, 2)} ({RISK_PER_TRADE_PCT}
 live_price_map = {}
 portfolio_results = []
 trail_list = []
+partial_list = []
 
 # ⚠️ TEST MODE — comment out when done testing
 TEST_MODE = False
@@ -891,12 +892,16 @@ for news in news_results:
     print("Impact:", news["Impact"])
     print("Affected Stocks:", ", ".join(news["AffectedStocks"]))
     print("-" * 50)
-for symbol in symbols:
+# ==================================
+# PARALLEL DATA FETCH
+# ==================================
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
+def fetch_one(symbol):
+    """Fetch yfinance historical + psxdata live price for one symbol."""
     data = None
     live_price = None
 
-    # Try yfinance for historical
     try:
         yf_data = yf.Ticker(symbol + ".KA").history(period="1y")
         if yf_data is not None and len(yf_data) > 0:
@@ -904,16 +909,11 @@ for symbol in symbols:
     except Exception:
         pass
 
-    # Always fetch latest price from psxdata
     try:
         import psxdata
         psx_df = psxdata.stocks(symbol)
-
         if psx_df is not None and len(psx_df) > 0:
-            # Latest row (dates descending in psxdata)
             live_price = round(float(psx_df.iloc[0]["close"]), 2)
-
-            # If yfinance failed, use psxdata for historical too
             if data is None:
                 psx_df = psx_df.rename(columns={
                     "date": "Date",
@@ -928,6 +928,25 @@ for symbol in symbols:
                 data = psx_df[["Open", "High", "Low", "Close", "Volume"]].tail(252)
     except Exception:
         pass
+
+    return symbol, data, live_price
+
+
+FETCH_CACHE = {}
+print(f"📡 Fetching {len(symbols)} symbols in parallel...")
+with ThreadPoolExecutor(max_workers=2) as ex:
+    futures = {ex.submit(fetch_one, s): s for s in symbols}
+    for fut in as_completed(futures):
+        try:
+            sym, d, lp = fut.result()
+            FETCH_CACHE[sym] = (d, lp)
+        except Exception as e:
+            print(f"⚠️ fetch failed: {e}")
+print(f"📡 Fetch done ({len(FETCH_CACHE)}/{len(symbols)})")
+
+
+for symbol in symbols:
+    data, live_price = FETCH_CACHE.get(symbol, (None, None))
 
     if data is None or len(data) < 50:
         continue
@@ -2066,6 +2085,7 @@ actions_payload = {
     "watch": watch_list,
 
     "trail": trail_list,
+    "partial": partial_list
 }
 
 with open("psx_actions.json", "w") as f:
@@ -2094,6 +2114,14 @@ for a in wait_list[:10]:
 print(f"\n🔴 EXIT ({len(exit_list)})")
 for a in exit_list:
     print(f"  {a['Symbol']:6} @ {a['Price']:>9} | P/L: {a['LossPct']}% | {a['Reason']}")
+
+
+print(f"\n💰 PARTIAL EXITS ({len(partial_list)})")
+for p in partial_list:
+    print(f"  {p['Symbol']:6} | {p['Trigger']:18} | "
+          f"SELL {p['SharesToSell']} / {p['SharesHeld']} ({p['SellPct']}%) | "
+          f"{p['Reason']} | P/L: {p['PLPercent']}%")
+
 
 print(f"\n📉 TRAILING STOPS ({len(trail_list)})")
 for t in trail_list:
@@ -2406,6 +2434,64 @@ for index, row in portfolio.iterrows():
             "TrailingStop": trailing_stop,
             "PLPercent": profit_pct
         })
+
+
+    # ==================================
+    # PARTIAL EXIT PLAN (engine-driven)
+    # ==================================
+    if not stock_row.empty:
+        row0 = stock_row.iloc[0]
+        eng_t1 = float(row0.get("Target1") or 0)
+        eng_t2 = float(row0.get("Target2") or 0)
+        eng_rsi = float(row0.get("RSI") or 0)
+        eng_div_bull = row0.get("BullishDivergence") == "YES"
+        eng_div_bear = row0.get("BearishDivergence") == "YES"
+        eng_vol = row0.get("VolumeStatus", "")
+        eng_pattern = str(row0.get("Pattern", ""))
+        eng_distribution = "Distribution" in eng_pattern
+
+        hit_t1 = eng_t1 > 0 and current_price >= eng_t1
+        hit_t2 = eng_t2 > 0 and current_price >= eng_t2
+
+        if hit_t2:
+            sell_pct = 100
+            trigger = f"TP2 hit @ {eng_t2}"
+            reason = "Full target reached — exit remaining"
+        elif hit_t1:
+            if eng_rsi > 70 or eng_div_bear or eng_distribution:
+                sell_pct = 75
+                note = "weakening"
+            elif eng_rsi < 60 and eng_div_bull and eng_vol in ("VOLUME SPIKE", "HIGH VOLUME"):
+                sell_pct = 25
+                note = "still strong"
+            elif 60 <= eng_rsi <= 70:
+                sell_pct = 50
+                note = "normal"
+            else:
+                sell_pct = 50
+                note = "default"
+            trigger = f"TP1 hit @ {eng_t1}"
+            reason = f"RSI {round(eng_rsi,1)} ({note})"
+        else:
+            sell_pct = 0
+            trigger = ""
+            reason = ""
+
+        if sell_pct > 0:
+            shares_to_sell = int(round(shares * (sell_pct / 100.0)))
+            if shares_to_sell < 1:
+                shares_to_sell = 1
+            partial_list.append({
+                "Symbol": symbol,
+                "BuyPrice": round(buy_price, 2),
+                "CurrentPrice": round(current_price, 2),
+                "Trigger": trigger,
+                "SellPct": sell_pct,
+                "SharesHeld": int(shares),
+                "SharesToSell": shares_to_sell,
+                "Reason": reason,
+                "PLPercent": profit_pct
+            })
     
 
     print(
