@@ -217,6 +217,12 @@ function renderSections() {
            <span>Value: PKR ${sum.CurrentValue}</span>
          </div>
          <div class="row2">
+           <span style="color:${(sum.CurrentValue - sum.TotalInvestment) >= 0 ? '#22aa22' : '#cc3333'}">P/L: PKR ${(sum.CurrentValue - sum.TotalInvestment).toFixed(2)}</span>
+
+
+
+         </div>
+         <div class="row2">
            <span>🟢 ${sum.Winners}</span>
            <span>🔴 ${sum.Losers}</span>
          </div>
