@@ -1,26 +1,22 @@
 {
     "BNL": {
         "Shares": 9000,
-        "BuyPrice": 6.63
+        "BuyPrice": 6.6
     },
     "GTYR": {
-        "Shares": 5500,
-        "BuyPrice": 34.45
-    },
-    "HUBC": {
-        "Shares": 250,
-        "BuyPrice": 213.07
+        "Shares": 56500,
+        "BuyPrice": 33.19
     },
     "LUCK": {
-        "Shares": 1300,
-        "BuyPrice": 447.06
+        "Shares": 1775,
+        "BuyPrice": 428.9
     },
-    "SPSL": {
-        "Shares": 18900,
-        "BuyPrice": 18.29
+    "PIAHCLA": {
+        "Shares": 3500,
+        "BuyPrice": 25.32
     },
-    "SYS": {
-        "Shares": 500,
-        "BuyPrice": 123.72
+    "PSO": {
+        "Shares": 748,
+        "BuyPrice": 356.72
     }
 }
