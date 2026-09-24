@@ -554,7 +554,7 @@ symbols = [
 "HUBC","KEL","KAPCO","SPWL","NPL",
 
 # FERTILIZER
-"FFC","EFERT","FATIMA","ENGRO",
+"FFC","EFERT","FATIMA","ENGROH",
 
 # BANKS
 "HBL","UBL","MCB","MEBL","NBP",
@@ -595,7 +595,7 @@ symbols = [
 "AICL","EFUG","EFUL","JGICL",
 
 # LEATHER & EXPORT
-"SRVI","PAKT",
+"SRVI","PAKT","PIAHCLA",
 
 # CABLES & ELECTRICAL
 "PAEL","WAVES",
@@ -606,7 +606,7 @@ symbols = [
 ]
 
 if TEST_MODE:
-    symbols = ["NETSOL", "LUCK", "NCL", "ENGRO", "SPSL", "BNL", "GTYR"]
+    symbols = ["NETSOL", "LUCK", "NCL", "ENGROH", "SPSL", "BNL", "GTYR"]
 sector_map = {
     "OGDC":"Oil & Gas",
     "PPL":"Oil & Gas",
@@ -638,6 +638,8 @@ sector_map = {
     "FFC":"Fertilizer",
     "EFERT":"Fertilizer",
     "FATIMA":"Fertilizer",
+
+    "PIAHCLA":"Transportation",
 
     "HUBC":"Power",
     "KAPCO":"Power"
@@ -718,7 +720,7 @@ news_rules = {
             "fertilizer subsidy"
         ],
         "stocks": [
-            "FFC", "EFERT", "FATIMA", "ENGRO"
+            "FFC", "EFERT", "FATIMA", "ENGROH"
         ]
     },
 
