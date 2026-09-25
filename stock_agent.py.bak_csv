@@ -81,45 +81,6 @@ if SUPABASE_URL:
 import os
 from datetime import datetime
 
-# ---------- CSV loaders ----------
-def _load_csv_column(path, column):
-    import csv, os
-    if not os.path.exists(path):
-        print(f"[csv] {path} not found")
-        return []
-    try:
-        with open(path, encoding="utf-8-sig") as f:
-            rows = list(csv.DictReader(f))
-        return [str(r.get(column, "")).strip().upper() for r in rows if str(r.get(column, "")).strip()]
-    except Exception as e:
-        print(f"[csv] error reading {path}: {e}")
-        return []
-
-def load_symbols_from_csv(path="symbols.csv"):
-    syms = _load_csv_column(path, "Symbol")
-    print(f"[symbols] Loaded {len(syms)} from {path}")
-    return syms
-
-def load_feeds_from_csv(path="news_feeds.csv"):
-    urls = _load_csv_column(path, "URL")
-    # URLs must not be uppercased
-    import csv, os
-    if not os.path.exists(path):
-        return []
-    with open(path, encoding="utf-8-sig") as f:
-        rows = list(csv.DictReader(f))
-    urls = [str(r.get("URL", "")).strip() for r in rows if str(r.get("URL", "")).strip()]
-    print(f"[news] Loaded {len(urls)} feeds from {path}")
-    return urls
-# ---------- end CSV loaders ----------
-
-
-
-
-
-
-
-
 SNAPSHOT_FILE = "portfolio_snapshot.json"
 HISTORY_FILE = "portfolio_history.csv"
 
@@ -587,38 +548,69 @@ partial_list = []
 
 # ⚠️ TEST MODE — comment out when done testing
 TEST_MODE = False
-symbols = load_symbols_from_csv("symbols.csv")
+symbols = [
+
+# OIL & GAS
+"OGDC","PPL","MARI","POL","PSO","ATRL","NRL","PRL","CNERGY","APL",
+
+# POWER
+"HUBC","KEL","KAPCO","SPWL","NPL",
+
+# FERTILIZER
+"FFC","EFERT","FATIMA","ENGROH",
+
+# BANKS
+"HBL","UBL","MCB","MEBL","NBP",
+"BAFL","BAHL","AKBL","BOP","BIPL",
+"FABL","SCBPL",
+
+# CEMENT
+"LUCK","DGKC","MLCF","CHCC","FCCL",
+"KOHC","PIOC","BWCL","ACPL","FECTC",
+
+# TECHNOLOGY
+"SYS","TRG","AVN","NETSOL","OCTOPUS",
+
+# PHARMACEUTICALS
+"SEARL","AGP","HINOON","ABOT","GLAXO",
+"FEROZ","CPHL",
+
+# CHEMICALS
+"EPCL","LOTCHEM","SITC",
+
+# TEXTILE
+"NML","GATM","KTML","ILP","NCL",
+"ADMM","GADT",
+
+# ENGINEERING & STEEL
+"ISL","ASTL","MUGHAL","AGHA",
+"INIL","ASL",
+
+# AUTOMOBILE
+"INDU","HCAR","GHNI",
+"GHGL","MTL",
+
+# FOOD
+"NATF","MUREB","UNITY","RMPL",
+"SHEZ","NESTLE",
+
+# INSURANCE
+"AICL","EFUG","EFUL","JGICL",
+
+# LEATHER & EXPORT
+"SRVI","PAKT","PIAHCLA",
+
+# CABLES & ELECTRICAL
+"PAEL","WAVES",
+
+# PORTFOLIO STOCKS
+"BNL","GTYR","SPSL"
+
+]
+
 if TEST_MODE:
     symbols = ["NETSOL", "LUCK", "NCL", "ENGROH", "SPSL", "BNL", "GTYR"]
-
-# ---------- Merge user watchlist from Supabase ----------
-USER_ID_EARLY = os.getenv("PSX_USER_ID", "default_user")
-try:
-    _wl_data = fetch_from_supabase(USER_ID_EARLY) or {}
-    USER_WATCHLIST = [str(s).strip().upper() for s in (_wl_data.get("watchlist") or []) if str(s).strip()]
-except Exception as _e:
-    print(f"[watchlist] fetch failed: {_e}")
-    USER_WATCHLIST = []
-
-if USER_WATCHLIST:
-    _seen = set(s.upper() for s in symbols)
-    _added = [s for s in USER_WATCHLIST if s.upper() not in _seen]
-    symbols = symbols + _added
-    print(f"[watchlist] {len(USER_WATCHLIST)} user symbols, added {len(_added)} new (total {len(symbols)})")
-else:
-    print("[watchlist] none found")
-# ---------- end watchlist merge ----------
-
 sector_map = {
-
-
-
-
-
-
-
-
-
     "OGDC":"Oil & Gas",
     "PPL":"Oil & Gas",
     "POL":"Oil & Gas",
@@ -670,8 +662,11 @@ news_items = [
 
 
 # ---------- REAL NEWS FETCH (RSS) ----------
-RSS_FEEDS = load_feeds_from_csv("news_feeds.csv")
-
+RSS_FEEDS = [
+    "https://www.dawn.com/feeds/business",
+    "https://customnews.pk/tag/psx/feed/",
+    "https://dailythedestination.com/tag/psx-kse-100-index/feed/",
+]
 def fetch_rss_headlines(limit_per_feed=5):
     headlines = []
     for url in RSS_FEEDS:
@@ -2172,31 +2167,6 @@ buy_now.sort(key=lambda x: -x["Confidence"])
 ready_list.sort(key=lambda x: -x["Confidence"])
 wait_list.sort(key=lambda x: -x["Confidence"])
 
-
-
-
-
-# ---------- Watchlist signals ----------
-watchlist_signals = []
-if USER_WATCHLIST:
-    _wl_set = set(s.upper() for s in USER_WATCHLIST)
-    for r in df.to_dict("records"):
-        if r["Symbol"].upper() in _wl_set:
-            watchlist_signals.append({
-                "Symbol": r["Symbol"],
-                "Price": r.get("LivePrice") or r.get("Close"),
-                "Signal": r.get("Signal"),
-                "RSI": round(float(r.get("RSI") or 0), 1),
-                "MasterScore": round(float(r.get("MasterScore") or 0), 1),
-                "Target1": r.get("Target1"),
-                "StopLoss": r.get("StopLoss"),
-                "BuyZone": r.get("BuyZoneNote") or "",
-                "TradeStyle": r.get("TradeStyle") or "-",
-                "StyleReason": r.get("StyleReason") or "",
-            })
-    watchlist_signals.sort(key=lambda x: -x["MasterScore"])
-print(f"[watchlist] {len(watchlist_signals)} signals ready for app")
-
 # Save to JSON
 actions_payload = {
     "generated": datetime.now().isoformat(),
@@ -2208,17 +2178,10 @@ actions_payload = {
 
     "trail": trail_list,
     "partial": partial_list,
-    "watchlist": USER_WATCHLIST,
-    "watchlist_signals": watchlist_signals,
 }
 
 with open("psx_actions.json", "w") as f:
     json.dump(actions_payload, f, indent=4)
-
-
-
-
-
 
 print("\n=== TODAY'S ACTIONS ===")
 
