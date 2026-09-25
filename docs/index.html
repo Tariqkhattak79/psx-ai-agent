@@ -86,13 +86,15 @@
   </div>
   <div class="section" id="sec_portfolio">
     <div class="section-title" style="color:#00cc99" onclick="toggleSection('sec_portfolio')">💼 PORTFOLIO</div>
-    <div class="section-body">
-      <div id="portfolio_summary"></div>
-      <div class="section-title" style="color:#ff9933;font-size:14px;margin-top:10px">⚙️ TRADE MANAGEMENT</div>
-      <div id="trade_manage_list"></div>
-      <div class="section-title" style="color:#66ccff;font-size:14px;margin-top:10px">📰 NEWS IMPACT</div>
-      <div id="news_list"></div>
-    </div>
+    <div class="section-body"><div id="portfolio_summary"></div></div>
+  </div>
+  <div class="section" id="sec_trade">
+    <div class="section-title" style="color:#ff9933" onclick="toggleSection('sec_trade')">⚙️ TRADE MANAGEMENT</div>
+    <div class="section-body"><div id="trade_manage_list"></div></div>
+  </div>
+  <div class="section" id="sec_news">
+    <div class="section-title" style="color:#66ccff" onclick="toggleSection('sec_news')">📰 NEWS IMPACT</div>
+    <div class="section-body"><div id="news_list"></div></div>
   </div>
   <div class="section" id="sec_wait">
     <div class="section-title yellow" onclick="toggleSection('sec_wait')">🟡 WAIT FOR PULLBACK</div>
@@ -144,10 +146,9 @@ async function loadData() {
     ALL_ACTIONS = data.actions || {};
 
     document.getElementById("status").textContent = "✅ " + USER_ID;
-    const payload = rows[0].data;
-    if (payload && payload.generated) {
+    if (data && data.generated) {
         document.getElementById("updated").textContent =
-            "Updated: " + new Date(payload.generated).toLocaleString();
+            "Updated: " + new Date(data.generated).toLocaleString();
     } else {
         document.getElementById("updated").textContent =
             "Updated: " + new Date(rows[0].updated_at).toLocaleString();
@@ -226,28 +227,18 @@ function renderSections() {
          </div>
          <div class="row2">
            <span style="color:${(sum.CurrentValue - sum.TotalInvestment) >= 0 ? '#22aa22' : '#cc3333'}">P/L: PKR ${(sum.CurrentValue - sum.TotalInvestment).toFixed(2)}</span>
-
-
-
          </div>
          <div class="row2">
            <span>🟢 ${sum.Winners}</span>
            <span>🔴 ${sum.Losers}</span>
          </div>
        </div>`
-    : "";
+    : "<div class='card'>No holdings in portfolio</div>";
 
   document.getElementById("trade_manage_list").innerHTML = pList.length
     ? pList.map(p => tradeManageCard(p)).join("")
     : "<div class='card'>No holdings to manage</div>";
 
-  const news = ALL_ACTIONS.news || [];
-  document.getElementById("news_list").innerHTML = news.length
-    ? news.map(n => newsCard(n)).join("")
-    : "<div class='card'>No news today</div>";
-}
-
-function renderNews() {
   const news = ALL_ACTIONS.news || [];
   document.getElementById("news_list").innerHTML = news.length
     ? news.map(n => newsCard(n)).join("")
@@ -277,10 +268,6 @@ function newsCard(n) {
   `;
 }
 
-
-
-
-
 function tradeManageCard(p) {
   const color = p.PLPercent >= 0 ? "#22aa22" : "#cc3333";
   const stop = p.StopLossAlert && p.StopLossAlert !== "NO STOP LOSS ALERT" ? p.StopLossAlert : "—";
@@ -303,31 +290,6 @@ function tradeManageCard(p) {
       <div class="reason">Stop: ${stop}</div>
       <div class="reason">Exit: ${exit}</div>
       <div class="reason">Sell: ${sell}</div>
-    </div>
-  `;
-}
-
-function portfolioCard(p) {
-  const color = p.PLPercent >= 0 ? "#22aa22" : "#cc3333";
-  const alertTxt = p.ExitAlert && p.ExitAlert !== "NO EXIT ALERT" ? p.ExitAlert
-                  : p.StopLossAlert && p.StopLossAlert !== "NO STOP LOSS ALERT" ? p.StopLossAlert
-                  : p.SellAlert && p.SellAlert !== "NO SELL ALERT" ? p.SellAlert
-                  : p.Action;
-  return `
-    <div class="card" style="border-color:${color}">
-      <div class="row1">
-        <span class="sym">${p.Symbol}</span>
-        <span class="badge" style="background:${color}">${p.PLPercent >= 0 ? '+' : ''}${p.PLPercent}%</span>
-      </div>
-      <div class="row2">
-        <span>Buy: ${p.BuyPrice}</span>
-        <span>Now: ${p.CurrentPrice}</span>
-      </div>
-      <div class="row2">
-        <span>${p.Shares} shares</span>
-        <span>${p.Action}</span>
-      </div>
-      <div class="reason">↳ ${alertTxt}</div>
     </div>
   `;
 }
@@ -509,7 +471,6 @@ function searchResultCard(r) {
   `;
 }
 
-// Auto-refresh every 15 min
 setInterval(loadData, 15 * 60 * 1000);
 
 loadData();
