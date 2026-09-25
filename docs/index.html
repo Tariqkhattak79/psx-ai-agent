@@ -90,6 +90,8 @@
       <div id="portfolio_summary"></div>
       <div class="section-title" style="color:#ff9933;font-size:14px;margin-top:10px">⚙️ TRADE MANAGEMENT</div>
       <div id="trade_manage_list"></div>
+      <div class="section-title" style="color:#66ccff;font-size:14px;margin-top:10px">📰 NEWS IMPACT</div>
+      <div id="news_list"></div>
     </div>
   </div>
   <div class="section" id="sec_wait">
@@ -232,7 +234,47 @@ function renderSections() {
   document.getElementById("trade_manage_list").innerHTML = pList.length
     ? pList.map(p => tradeManageCard(p)).join("")
     : "<div class='card'>No holdings to manage</div>";
+
+  const news = ALL_ACTIONS.news || [];
+  document.getElementById("news_list").innerHTML = news.length
+    ? news.map(n => newsCard(n)).join("")
+    : "<div class='card'>No news today</div>";
 }
+
+function renderNews() {
+  const news = ALL_ACTIONS.news || [];
+  document.getElementById("news_list").innerHTML = news.length
+    ? news.map(n => newsCard(n)).join("")
+    : "<div class='card'>No news today</div>";
+}
+
+function newsCard(n) {
+  const dir = n.Direction || "UNKNOWN";
+  const color = dir === "POSITIVE" ? "#22aa22" : dir === "NEGATIVE" ? "#cc3333" : "#999999";
+  const impact = n.Impact || "LOW";
+  const impColor = impact === "HIGH" ? "#cc3333" : impact === "MEDIUM" ? "#ff9933" : "#666666";
+  const stocks = (n.AffectedStocks || []).join(", ");
+  return `
+    <div class="card" style="border-color:${color}">
+      <div class="row1">
+        <span class="sym" style="font-size:13px">${n.Headline}</span>
+      </div>
+      <div class="row2">
+        <span>${n.Category}</span>
+        <span class="badge" style="background:${impColor}">${impact}</span>
+      </div>
+      <div class="row2">
+        <span style="color:${color}">${dir}</span>
+      </div>
+      ${stocks ? `<div class="reason">Affects: ${stocks}</div>` : ""}
+    </div>
+  `;
+}
+
+
+
+
+
 function tradeManageCard(p) {
   const color = p.PLPercent >= 0 ? "#22aa22" : "#cc3333";
   const stop = p.StopLossAlert && p.StopLossAlert !== "NO STOP LOSS ALERT" ? p.StopLossAlert : "—";

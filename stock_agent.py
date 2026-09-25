@@ -379,7 +379,7 @@ def upload_to_supabase(user_id, actions_data, report_data):
             "apikey": SUPABASE_SECRET,
             "Authorization": f"Bearer {SUPABASE_SECRET}",
             "Content-Type": "application/json",
-            "Prefer": "resolution=merge-duplicates",
+            "Prefer": "resolution=merge-duplicates,return=minimal",
         }
 
         payload = {
@@ -2694,6 +2694,7 @@ for index, row in portfolio.iterrows():
 # ==================================
 # RE-WRITE actions_payload WITH PORTFOLIO
 # ==================================
+actions_payload["news"] = news_results
 actions_payload["portfolio"] = portfolio_results
 actions_payload["portfolio_summary"] = {
     "TotalInvestment": round(TOTAL_INVESTMENT, 2),
