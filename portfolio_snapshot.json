@@ -3,20 +3,40 @@
         "Shares": 9000,
         "BuyPrice": 6.6
     },
+    "EFERT": {
+        "Shares": 100,
+        "BuyPrice": 193.94
+    },
+    "FABL": {
+        "Shares": 500,
+        "BuyPrice": 94.18
+    },
+    "FFC": {
+        "Shares": 100,
+        "BuyPrice": 542.44
+    },
     "GTYR": {
-        "Shares": 56500,
+        "Shares": 6500,
         "BuyPrice": 33.19
     },
     "LUCK": {
-        "Shares": 1775,
+        "Shares": 1175,
         "BuyPrice": 428.9
     },
-    "PIAHCLA": {
-        "Shares": 3500,
-        "BuyPrice": 25.32
+    "MARI": {
+        "Shares": 100,
+        "BuyPrice": 643.9
+    },
+    "NETSOL": {
+        "Shares": 500,
+        "BuyPrice": 123.0
     },
     "PSO": {
         "Shares": 748,
         "BuyPrice": 356.72
+    },
+    "Searl": {
+        "Shares": 500,
+        "BuyPrice": 83.45
     }
 }
