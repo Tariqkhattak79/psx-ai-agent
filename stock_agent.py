@@ -3,6 +3,9 @@ import yfinance as yf
 import pandas as pd
 import json
 import os
+import ssl
+import urllib.request
+import xml.etree.ElementTree as ET
 import requests
 import smtplib
 from email.message import EmailMessage
@@ -656,6 +659,42 @@ news_items = [
     "SBP cuts interest rate",
     "Pakistan rupee depreciates against the US dollar",
 ]
+
+
+# ---------- REAL NEWS FETCH (RSS) ----------
+RSS_FEEDS = [
+    "https://www.dawn.com/feeds/business",
+    "https://customnews.pk/tag/psx/feed/",
+    "https://dailythedestination.com/tag/psx-kse-100-index/feed/",
+]
+def fetch_rss_headlines(limit_per_feed=5):
+    headlines = []
+    for url in RSS_FEEDS:
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
+
+
+                data = resp.read()
+            root = ET.fromstring(data)
+            items = root.findall(".//item")
+            for it in items[:limit_per_feed]:
+                title_el = it.find("title")
+                if title_el is not None and title_el.text:
+                    headlines.append(title_el.text.strip())
+        except Exception as e:
+            print(f"[news] RSS fail {url}: {e}")
+    return headlines
+
+_fetched = fetch_rss_headlines()
+news_items = _fetched if _fetched else news_items
+print(f"[news] Loaded {len(news_items)} headlines")
+# ---------- END REAL NEWS FETCH ----------
+
+
 
 news_rules = {
 
