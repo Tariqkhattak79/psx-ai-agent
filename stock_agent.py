@@ -388,11 +388,11 @@ def upload_to_supabase(user_id, actions_data, report_data):
         payload = {
             "user_id": user_id,
             "data": {
+                "generated": actions_data.get("generated"),
                 "actions": actions_data,
                 "report": report_data
             }
         }
-
         # Send the POST request to upsert the data
         response = requests.post(url, headers=headers, json=payload)
 
@@ -2770,9 +2770,8 @@ try:
 except Exception:
     report_for_upload = []
 
-upload_to_supabase(USER_ID, actions_for_upload, report_for_upload)
-
-
+ok = upload_to_supabase(USER_ID, actions_for_upload, report_for_upload)
+print(f"[supabase] upload result: {ok} for user_id={USER_ID}")
 # Write OK status
 try:
     with open(STATUS_FILE, "w") as f:
