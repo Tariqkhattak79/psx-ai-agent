@@ -2197,8 +2197,22 @@ if USER_WATCHLIST:
     watchlist_signals.sort(key=lambda x: -x["MasterScore"])
 print(f"[watchlist] {len(watchlist_signals)} signals ready for app")
 
+# Build stats payload
+_stats_payload = stats if stats else {}
+
+# Build signal history payload (last 50 rows)
+_signal_history_payload = []
+if os.path.exists("signal_history.csv"):
+    import csv as _csv
+    with open("signal_history.csv", "r", encoding="utf-8", errors="replace") as _f:
+        _rows = list(_csv.DictReader(_f))
+    _signal_history_payload = _rows[-50:]
+
 # Save to JSON
 actions_payload = {
+
+
+
     "generated": datetime.now().isoformat(),
     "buy_now": buy_now,
     "ready": ready_list,
@@ -2210,8 +2224,9 @@ actions_payload = {
     "partial": partial_list,
     "watchlist": USER_WATCHLIST,
     "watchlist_signals": watchlist_signals,
+    "stats": _stats_payload,
+    "signal_history": _signal_history_payload,
 }
-
 with open("psx_actions.json", "w") as f:
     json.dump(actions_payload, f, indent=4)
 
