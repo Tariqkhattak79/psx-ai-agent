@@ -577,8 +577,9 @@ function searchStock() {
 
   if (q.length < 2) { box.innerHTML = ""; return; }
 
-  const matches = ALL_REPORT.filter(r => r.Symbol.toUpperCase().includes(q));
-
+  const matches = ALL_REPORT.filter(r => {
+    return Object.values(r).some(v => String(v == null ? "" : v).toUpperCase().includes(q));
+  });
   if (!matches.length) {
     box.innerHTML = "<div class='card'>No match found</div>";
     return;
