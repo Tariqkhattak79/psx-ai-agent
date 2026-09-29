@@ -1,42 +1,42 @@
 {
     "BNL": {
-        "Shares": 9000,
+        "Shares": 9000.0,
         "BuyPrice": 6.6
     },
     "EFERT": {
-        "Shares": 100,
+        "Shares": 100.0,
         "BuyPrice": 193.94
     },
     "FABL": {
-        "Shares": 500,
+        "Shares": 500.0,
         "BuyPrice": 94.18
     },
     "FFC": {
-        "Shares": 100,
+        "Shares": 100.0,
         "BuyPrice": 542.44
     },
     "GTYR": {
-        "Shares": 6500,
+        "Shares": 6500.0,
         "BuyPrice": 33.19
     },
     "LUCK": {
-        "Shares": 1175,
+        "Shares": 1175.0,
         "BuyPrice": 428.9
     },
     "MARI": {
-        "Shares": 100,
+        "Shares": 100.0,
         "BuyPrice": 643.9
     },
     "NETSOL": {
-        "Shares": 500,
+        "Shares": 500.0,
         "BuyPrice": 123.0
     },
     "PSO": {
-        "Shares": 748,
+        "Shares": 748.0,
         "BuyPrice": 356.72
     },
     "Searl": {
-        "Shares": 500,
+        "Shares": 500.0,
         "BuyPrice": 83.45
     }
 }
