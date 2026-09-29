@@ -414,14 +414,13 @@ def upload_to_supabase(user_id, actions_data, report_data):
 
     try:
         # The REST endpoint for the 'signals' table
-        url = f"{SUPABASE_URL}/rest/v1/signals?on_conflict=user_id"
-
+        url = f"{SUPABASE_URL}/rest/v1/signals?user_id=eq.{user_id}"
         # These headers are crucial: they tell PostgREST to merge duplicates
         headers = {
             "apikey": SUPABASE_SECRET,
             "Authorization": f"Bearer {SUPABASE_SECRET}",
             "Content-Type": "application/json",
-            "Prefer": "resolution=merge-duplicates,return=representation",
+            "Prefer": "return=representation",
         }
 
         payload = {
@@ -433,7 +432,7 @@ def upload_to_supabase(user_id, actions_data, report_data):
             }
         }
         # Send the POST request to upsert the data
-        response = requests.post(url, headers=headers, json=payload)
+        response = requests.patch(url, headers=headers, json=payload)
 
         # Check if the request was successful (status code 200 or 201)
         if response.status_code in [200, 201]:
