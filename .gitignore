@@ -15,4 +15,5 @@ out.txt
 last_run_status.json
 git add .gitignore
 git commit -m "Ignore last_run_status.json"
-git push
+git pushstock_agent.py.bak_* 
+*.bak_* 
