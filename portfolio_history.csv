@@ -22,3 +22,6 @@ Date,Symbol,Type,Shares,Price,Note
 2026-09-25,NETSOL,BUY,500,123.0,new position
 2026-09-25,Searl,BUY,500,83.45,new position
 2026-09-25,PIAHCLA,SELL,3500,25.32,position closed
+2026-09-29,BNL,SELL,1.0,6.6,reduced shares
+2026-09-29,SEARL,BUY,500.0,83.45,new position
+2026-09-29,Searl,SELL,500.0,83.45,position closed

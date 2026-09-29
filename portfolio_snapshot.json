@@ -1,6 +1,6 @@
 {
     "BNL": {
-        "Shares": 9000.0,
+        "Shares": 8999.0,
         "BuyPrice": 6.6
     },
     "EFERT": {
@@ -35,7 +35,7 @@
         "Shares": 748.0,
         "BuyPrice": 356.72
     },
-    "Searl": {
+    "SEARL": {
         "Shares": 500.0,
         "BuyPrice": 83.45
     }
