@@ -414,14 +414,14 @@ def upload_to_supabase(user_id, actions_data, report_data):
 
     try:
         # The REST endpoint for the 'signals' table
-        url = f"{SUPABASE_URL}/rest/v1/signals"
+        url = f"{SUPABASE_URL}/rest/v1/signals?on_conflict=user_id"
 
         # These headers are crucial: they tell PostgREST to merge duplicates
         headers = {
             "apikey": SUPABASE_SECRET,
             "Authorization": f"Bearer {SUPABASE_SECRET}",
             "Content-Type": "application/json",
-            "Prefer": "resolution=merge-duplicates,return=minimal",
+            "Prefer": "resolution=merge-duplicates,return=representation",
         }
 
         payload = {
