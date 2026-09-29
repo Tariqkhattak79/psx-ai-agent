@@ -239,7 +239,7 @@ function renderSections() {
 
   const wait = ALL_ACTIONS.wait || [];
   document.getElementById("wait_list").innerHTML = wait.length
-    ? wait.slice(0, 10).map(w => waitCard(w)).join("")
+    ?     wait.map(w => waitCard(w)).join("")
     : "<div class='card'>No waiting setups</div>";
 
   const exit = ALL_ACTIONS.exit || [];
