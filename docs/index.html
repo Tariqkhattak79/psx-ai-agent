@@ -460,7 +460,7 @@ async function loadData() {
     ALL_ACTIONS = data.actions || {};
     ALL_ACTIONS.__rawData = data;
 
-    document.getElementById("status").textContent = "✅ Signed in";
+    document.getElementById("status").textContent = "✅ " + USER_ID;
     if (data && data.generated) {
         document.getElementById("updated").textContent =
             "Updated: " + new Date(data.generated).toLocaleString();
