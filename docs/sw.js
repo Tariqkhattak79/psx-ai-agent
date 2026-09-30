@@ -1,4 +1,4 @@
-const CACHE = 'psx-elite-v1';
+const CACHE = 'psx-elite-v2';
 const ASSETS = [
   './',
   './index.html',
