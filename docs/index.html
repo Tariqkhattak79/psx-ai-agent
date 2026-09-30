@@ -453,7 +453,7 @@ async function loadData() {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const rows = await res.json();
-    if (!rows.length) throw new Error("No data for user yet");
+    if (!rows.length) throw new Error("No data for user: " + USER_ID);
 
     const data = rows[0].data;
     ALL_REPORT = data.report || [];
