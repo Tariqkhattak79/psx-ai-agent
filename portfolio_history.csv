@@ -31,3 +31,6 @@ Date,Symbol,Type,Shares,Price,Note
 2026-09-30,PSO,SELL,500.0,344.6,reduced shares
 2026-09-30,SEARL,BUY,500.0,83.45,new position
 2026-09-30,Searl,SELL,500.0,83.45,position closed
+2026-09-30,PSO,BUY,500.0,356.72,added shares
+2026-09-30,Searl,BUY,500.0,83.45,new position
+2026-09-30,SEARL,SELL,500.0,83.45,position closed

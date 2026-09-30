@@ -32,10 +32,10 @@
         "BuyPrice": 123.0
     },
     "PSO": {
-        "Shares": 248.0,
-        "BuyPrice": 344.6
+        "Shares": 748.0,
+        "BuyPrice": 356.72
     },
-    "SEARL": {
+    "Searl": {
         "Shares": 500.0,
         "BuyPrice": 83.45
     }
