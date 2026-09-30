@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PSX Elite Scanner</title>
 <link rel="manifest" href="manifest.json">
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
 <meta name="theme-color" content="#0a0a0a">
 <style>
   * { box-sizing: border-box; }
