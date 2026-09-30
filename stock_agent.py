@@ -402,18 +402,19 @@ def log_portfolio_value(total_investment, total_current_value, portfolio_pl):
 def upload_to_supabase(user_id, actions_data, report_data):
     """
     Push today's data to Supabase using the REST API.
+    Uses upsert (POST + merge-duplicates) so it works for new users too.
     """
     if not SUPABASE_URL or not SUPABASE_SECRET:
         print("⚠️  Supabase not configured — skipping upload")
         return False
 
     try:
-        url = f"{SUPABASE_URL}/rest/v1/signals?user_id=eq.{user_id}"
+        url = f"{SUPABASE_URL}/rest/v1/signals"
         headers = {
             "apikey": SUPABASE_SECRET,
             "Authorization": f"Bearer {SUPABASE_SECRET}",
             "Content-Type": "application/json",
-            "Prefer": "return=representation",
+            "Prefer": "resolution=merge-duplicates,return=representation",
         }
 
         payload = {
@@ -424,7 +425,7 @@ def upload_to_supabase(user_id, actions_data, report_data):
                 "report": report_data
             }
         }
-        response = requests.patch(url, headers=headers, json=payload)
+        response = requests.post(url, headers=headers, json=payload)
 
         if response.status_code in [200, 201]:
             print(f"☁️  Uploaded to Supabase for user: {user_id}")
