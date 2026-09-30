@@ -15,7 +15,8 @@ if ('serviceWorker' in navigator) {
   * { box-sizing: border-box; }
   body { font-family: -apple-system, "Segoe UI", sans-serif; background: #0a0a0a; color: #eee; margin: 0; padding: 12px; padding-bottom: 80px; }
   h1 { font-size: 18px; margin: 0 0 8px 0; }
-  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px; }
+  .top .logout-btn { background: transparent; color: #888; border: 1px solid #333; padding: 6px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; }
   .status { font-size: 12px; color: #888; }
   .stats { display: flex; gap: 8px; margin-bottom: 16px; }
   .stat { flex: 1; background: #1a1a1a; padding: 10px; border-radius: 8px; text-align: center; }
@@ -78,13 +79,61 @@ if ('serviceWorker' in navigator) {
   .portfolio-edit-table input { background: #0f0f0f; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 6px; font-size: 12px; width: 100%; }
   .portfolio-edit-table .del-btn { background: #661111; color: #fff; border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; }
   .portfolio-edit-table .add-btn { background: #224422; color: #fff; border: none; border-radius: 4px; padding: 8px 12px; margin-top: 8px; cursor: pointer; }
+
+  /* Login screen */
+  #auth_overlay { position: fixed; inset: 0; background: #0a0a0a; z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  #auth_overlay.hidden { display: none; }
+  .auth-box { width: 100%; max-width: 360px; background: #1a1a1a; border-radius: 12px; padding: 24px 20px; border: 1px solid #333; }
+  .auth-box h2 { margin: 0 0 4px 0; font-size: 22px; text-align: center; }
+  .auth-box .sub { color: #888; font-size: 12px; text-align: center; margin-bottom: 20px; }
+  .auth-box input[type="email"], .auth-box input[type="password"] { width: 100%; padding: 12px; font-size: 14px; border-radius: 8px; border: 1px solid #333; background: #0f0f0f; color: #fff; margin-bottom: 12px; outline: none; }
+  .auth-box input:focus { border-color: #44cc44; }
+  .auth-box button { width: 100%; padding: 12px; font-size: 14px; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; }
+  .auth-box .primary { background: #22aa22; color: #fff; margin-top: 4px; }
+  .auth-box .primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .auth-box .link { color: #44cc44; font-size: 13px; text-align: center; margin-top: 14px; cursor: pointer; text-decoration: underline; }
+  .auth-box .row-check { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 13px; color: #ccc; }
+  .auth-box .row-check input { width: auto; margin: 0; }
+  .auth-box .msg { font-size: 12px; color: #ff6666; text-align: center; margin-top: 10px; min-height: 16px; }
+  .auth-box .msg.ok { color: #44cc44; }
 </style>
 </head>
 <body>
 
+<div id="auth_overlay" class="hidden">
+  <div class="auth-box">
+    <h2>⚡ PSX Elite</h2>
+    <div class="sub" id="auth_sub">Sign in to continue</div>
+
+    <div id="auth_login_form">
+      <input type="email" id="auth_email" placeholder="Email" autocomplete="username">
+      <input type="password" id="auth_password" placeholder="Password" autocomplete="current-password">
+      <div class="row-check">
+        <input type="checkbox" id="auth_remember" checked>
+        <label for="auth_remember">Remember me on this device</label>
+      </div>
+      <button class="primary" id="auth_login_btn" onclick="doLogin()">Log In</button>
+      <div class="link" onclick="showSignup()">New user? Create account</div>
+    </div>
+
+    <div id="auth_signup_form" class="hidden">
+      <input type="email" id="auth_email2" placeholder="Email" autocomplete="username">
+      <input type="password" id="auth_password2" placeholder="Password (min 6 chars)" autocomplete="new-password">
+      <input type="password" id="auth_password3" placeholder="Confirm password" autocomplete="new-password">
+      <button class="primary" id="auth_signup_btn" onclick="doSignup()">Create Account</button>
+      <div class="link" onclick="showLogin()">Already have an account? Log in</div>
+    </div>
+
+    <div class="msg" id="auth_msg"></div>
+  </div>
+</div>
+
 <div class="top">
   <h1>⚡ PSX Elite</h1>
-  <button onclick="loadData()">🔄</button>
+  <div style="display:flex;gap:6px;align-items:center">
+    <button onclick="loadData()">🔄</button>
+    <button class="logout-btn" id="logout_btn" onclick="doLogout()" style="display:none">Logout</button>
+  </div>
 </div>
 <div class="status" id="status">Loading...</div>
 <div class="status" id="updated"></div>
@@ -197,33 +246,221 @@ if ('serviceWorker' in navigator) {
 <script>
 const SUPABASE_URL = "https://lmuwpfejzzfsagkjddui.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtdXdwZmVqenpmc2Fna2pkZHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwNTU0MTQsImV4cCI6MjEwNTYzMTQxNH0.ENHKw9MgCVzZwK8nvVGLaNBILoKeZvGMvgOv5HUvODI";
-const params = new URLSearchParams(window.location.search);
-const USER_ID = params.get("user") || "TariqUsman";
 
+let USER_ID = null;       // set after login
+let ACCESS_TOKEN = null;  // set after login
 let ALL_REPORT = [];
 let ALL_ACTIONS = {};
+
+// ==================================
+// AUTH — Supabase email/password
+// ==================================
+
+function authMsg(text, ok) {
+  const el = document.getElementById("auth_msg");
+  el.textContent = text || "";
+  el.classList.toggle("ok", !!ok);
+}
+
+function showLogin() {
+  document.getElementById("auth_login_form").classList.remove("hidden");
+  document.getElementById("auth_signup_form").classList.add("hidden");
+  document.getElementById("auth_sub").textContent = "Sign in to continue";
+  authMsg("");
+}
+
+function showSignup() {
+  document.getElementById("auth_login_form").classList.add("hidden");
+  document.getElementById("auth_signup_form").classList.remove("hidden");
+  document.getElementById("auth_sub").textContent = "Create your account";
+  authMsg("");
+}
+
+async function doLogin() {
+  const email = document.getElementById("auth_email").value.trim();
+  const pw = document.getElementById("auth_password").value;
+  const remember = document.getElementById("auth_remember").checked;
+  if (!email || !pw) { authMsg("Enter email and password"); return; }
+
+  const btn = document.getElementById("auth_login_btn");
+  btn.disabled = true;
+  authMsg("Logging in...", true);
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, password: pw })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error_description || data.msg || `HTTP ${res.status}`);
+
+    saveSession(data, remember);
+    authMsg("Welcome!", true);
+    startApp();
+  } catch (e) {
+    authMsg(e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function doSignup() {
+  const email = document.getElementById("auth_email2").value.trim();
+  const pw = document.getElementById("auth_password2").value;
+  const pw2 = document.getElementById("auth_password3").value;
+  if (!email || !pw) { authMsg("Enter email and password"); return; }
+  if (pw.length < 6) { authMsg("Password must be at least 6 characters"); return; }
+  if (pw !== pw2) { authMsg("Passwords don't match"); return; }
+
+  const btn = document.getElementById("auth_signup_btn");
+  btn.disabled = true;
+  authMsg("Creating account...", true);
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, password: pw })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error_description || data.msg || `HTTP ${res.status}`);
+
+    // If email confirm is off, we get a session back immediately
+    if (data.access_token) {
+      saveSession(data, true);
+      authMsg("Account created!", true);
+      startApp();
+    } else {
+      authMsg("Account created. Check your email to confirm.", true);
+      setTimeout(showLogin, 1500);
+    }
+  } catch (e) {
+    authMsg(e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function saveSession(data, remember) {
+  const session = {
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+    user_id: data.user && data.user.id ? data.user.id : null,
+    email: data.user && data.user.email ? data.user.email : null,
+    expires_at: Date.now() + ((data.expires_in || 3600) * 1000)
+  };
+  const store = remember ? localStorage : sessionStorage;
+  // clear from the other store
+  (remember ? sessionStorage : localStorage).removeItem("psx_session");
+  store.setItem("psx_session", JSON.stringify(session));
+  localStorage.setItem("psx_last_email", session.email || "");
+}
+
+function loadSession() {
+  const raw = localStorage.getItem("psx_session") || sessionStorage.getItem("psx_session");
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+}
+
+function clearSession() {
+  localStorage.removeItem("psx_session");
+  sessionStorage.removeItem("psx_session");
+}
+
+async function refreshAccessToken(refresh_token) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: "POST",
+      headers: { "apikey": SUPABASE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token })
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    // keep in same store as before
+    const inLocal = !!localStorage.getItem("psx_session");
+    saveSession(data, inLocal);
+    return data;
+  } catch { return null; }
+}
+
+async function doLogout() {
+  try {
+    if (ACCESS_TOKEN) {
+      await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+        method: "POST",
+        headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${ACCESS_TOKEN}` }
+      });
+    }
+  } catch {}
+  clearSession();
+  USER_ID = null;
+  ACCESS_TOKEN = null;
+  ALL_REPORT = [];
+  ALL_ACTIONS = {};
+  document.getElementById("auth_overlay").classList.remove("hidden");
+  document.getElementById("logout_btn").style.display = "none";
+  document.getElementById("status").textContent = "Signed out";
+  document.getElementById("updated").textContent = "";
+  document.getElementById("stats").innerHTML = "";
+  showLogin();
+}
+
+async function startApp() {
+  const sess = loadSession();
+  if (!sess || !sess.access_token) {
+    document.getElementById("auth_overlay").classList.remove("hidden");
+    const lastEmail = localStorage.getItem("psx_last_email");
+    if (lastEmail) document.getElementById("auth_email").value = lastEmail;
+    return;
+  }
+  USER_ID = sess.user_id;
+  ACCESS_TOKEN = sess.access_token;
+  document.getElementById("auth_overlay").classList.add("hidden");
+  document.getElementById("logout_btn").style.display = "inline-block";
+
+  // refresh if expired or close to expiry
+  if (sess.expires_at && Date.now() > (sess.expires_at - 60000)) {
+    const r = await refreshAccessToken(sess.refresh_token);
+    if (r) ACCESS_TOKEN = r.access_token;
+    else { doLogout(); return; }
+  }
+
+  loadData();
+}
+
+// ==================================
+// DATA
+// ==================================
 
 function toggleSection(id) {
   document.getElementById(id).classList.toggle("open");
 }
 
 async function loadData() {
+  if (!USER_ID) return;
   document.getElementById("status").textContent = "Fetching...";
   try {
-    const url = `${SUPABASE_URL}/rest/v1/signals?user_id=eq.${USER_ID}&select=data,updated_at`;
+    const url = `${SUPABASE_URL}/rest/v1/signals?user_id=eq.${encodeURIComponent(USER_ID)}&select=data,updated_at`;
     const res = await fetch(url, {
-      headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
+      headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${ACCESS_TOKEN || SUPABASE_KEY}` }
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const rows = await res.json();
-    if (!rows.length) throw new Error("No data for user " + USER_ID);
+    if (!rows.length) throw new Error("No data for user yet");
 
     const data = rows[0].data;
     ALL_REPORT = data.report || [];
     ALL_ACTIONS = data.actions || {};
     ALL_ACTIONS.__rawData = data;
 
-    document.getElementById("status").textContent = "✅ " + USER_ID;
+    document.getElementById("status").textContent = "✅ Signed in";
     if (data && data.generated) {
         document.getElementById("updated").textContent =
             "Updated: " + new Date(data.generated).toLocaleString();
@@ -586,12 +823,12 @@ async function saveWatchlist() {
   });
 
   try {
-    const url = `${SUPABASE_URL}/rest/v1/signals?user_id=eq.${USER_ID}`;
+    const url = `${SUPABASE_URL}/rest/v1/signals?user_id=eq.${encodeURIComponent(USER_ID)}`;
     const res = await fetch(url, {
       method: "PATCH",
       headers: {
         "apikey": SUPABASE_KEY,
-        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Authorization": `Bearer ${ACCESS_TOKEN || SUPABASE_KEY}`,
         "Content-Type": "application/json",
         "Prefer": "return=minimal"
       },
@@ -682,12 +919,12 @@ async function savePortfolio() {
   });
 
   try {
-    const url = `${SUPABASE_URL}/rest/v1/signals?user_id=eq.${USER_ID}`;
+    const url = `${SUPABASE_URL}/rest/v1/signals?user_id=eq.${encodeURIComponent(USER_ID)}`;
     const res = await fetch(url, {
       method: "PATCH",
       headers: {
         "apikey": SUPABASE_KEY,
-        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Authorization": `Bearer ${ACCESS_TOKEN || SUPABASE_KEY}`,
         "Content-Type": "application/json",
         "Prefer": "return=minimal"
       },
@@ -904,9 +1141,10 @@ function closeDetail() {
   window.scrollTo(0, 0);
 }
 
-setInterval(loadData, 15 * 60 * 1000);
+setInterval(() => { if (USER_ID) loadData(); }, 15 * 60 * 1000);
 
-loadData();
+// Boot: check session
+startApp();
 </script>
 
 </body>
