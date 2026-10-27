@@ -1023,9 +1023,12 @@ for news in news_results:
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def fetch_one(symbol):
-    '''Fetch historical data using pypsx-toolkit (Wyckoff method).'''
+    '''Fetch historical data using ONLY pypsx-toolkit (Wyckoff method).'''
     data = None
     live_price = None
+
+    import time
+    time.sleep(1.0) # 1-second delay to prevent GitHub from getting blocked
 
     try:
         import pypsx_toolkit as pt
@@ -1069,14 +1072,14 @@ def fetch_one(symbol):
                 live_price = float(data["Close"].iloc[-1])
 
     except Exception as e:
-        print(f"{symbol} | Toolkit fetch failed: {e}")
+        print(f"{symbol} | Toolkit failed: {e}")
 
     return symbol, data, live_price
 
 
 FETCH_CACHE = {}
 print(f"📡 Fetching {len(symbols)} symbols in parallel...")
-with ThreadPoolExecutor(max_workers=4) as ex:
+with ThreadPoolExecutor(max_workers=1) as ex:
     futures = {ex.submit(fetch_one, s): s for s in symbols}
     for fut in as_completed(futures):
         try:
@@ -2905,6 +2908,7 @@ try:
     print("✅ Run status: ok")
 except Exception as e:
     print(f"⚠️ Could not write status: {e}")
+
 
 
 
