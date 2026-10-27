@@ -39,7 +39,10 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          git add -f . || true
+          git add -f *.csv *.json || true
+          
           git commit -m "Automated update: Signals and Portfolio" || echo "No changes to commit"
+          
           git pull --rebase origin main || true
+          
           git push || true
