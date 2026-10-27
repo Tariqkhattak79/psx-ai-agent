@@ -38,10 +38,18 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          
+          # Force add only if file exists
           for file in portfolio_history.csv portfolio_value_history.csv signal_history.csv psx_actions.json psx_report.json last_run_status.json; do
             if [ -f "" ]; then
               git add -f ""
             fi
           done
+          
           git commit -m "Automated update: Signals and Portfolio" || echo "No changes to commit"
+          
+          # Pull the latest changes to avoid conflicts
+          git pull --rebase origin main
+          
+          # Push the changes
           git push
