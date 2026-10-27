@@ -1,5 +1,4 @@
 import pandas as pd
-import yfinance as yf
 import json
 import os
 import ssl
@@ -2886,6 +2885,8 @@ try:
     print("✅ Run status: ok")
 except Exception as e:
     print(f"⚠️ Could not write status: {e}")
+
+
 
 
 

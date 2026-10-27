@@ -1,6 +1,8 @@
-yfinance
 pypsx-toolkit
 pandas
 openpyxl
 python-dotenv
 requests
+beautifulsoup4
+cloudscraper
+lxml
