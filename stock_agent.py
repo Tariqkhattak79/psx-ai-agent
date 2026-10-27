@@ -1,4 +1,3 @@
-import yfinance as yf
 import pandas as pd
 import json
 import os
@@ -2360,11 +2359,20 @@ else:
     email_text += "No closed trades yet.\n"
 
 msg.set_content(email_text)
-with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-    smtp.login(sender_email, app_password)
-    smtp.send_message(msg)
 
-print("\nEmail alert sent!")
+# Only send email if it's near market close (3:30 PM PKT to 3:45 PM)
+from datetime import datetime
+now = datetime.now()
+if (now.hour == 15 and now.minute >= 30) or (now.hour == 15 and now.minute <= 45):
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(sender_email, app_password)
+            smtp.send_message(msg)
+        print("\nEmail alert sent!")
+    except Exception as e:
+        print(f"\nEmail failed: {e}")
+else:
+    print("\nSkipping email: Market not closed yet (waiting for 3:30 PM).")
 
 buy_count = len(df[df["Signal"].isin(["BUY", "STRONG BUY"])])
 watch_count = len(df[df["Signal"] == "WATCH"])
@@ -2877,3 +2885,6 @@ try:
     print("✅ Run status: ok")
 except Exception as e:
     print(f"⚠️ Could not write status: {e}")
+
+
+
