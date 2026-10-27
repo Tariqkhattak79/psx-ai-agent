@@ -1071,6 +1071,8 @@ with ThreadPoolExecutor(max_workers=4) as ex:
         except Exception as e:
             print(f"⚠️ fetch failed: {e}")
 print(f"📡 Fetch done ({len(FETCH_CACHE)}/{len(symbols)})")
+valid_count = sum(1 for s, (d, lp) in FETCH_CACHE.items() if d is not None)
+print(f"⚠️ DEBUG: {valid_count} out of {len(symbols)} symbols returned valid data!")
 
 
 for symbol in symbols:
@@ -1859,11 +1861,15 @@ for _, r in df.iterrows():
         except (TypeError, ValueError):
             pass
 
-sector_rank = (
-    df.groupby("Sector")["Confidence"]
-    .mean()
-    .sort_values(ascending=False)
-)
+if not df.empty and "Sector" in df.columns:
+    sector_rank = (
+        df.groupby("Sector")["Confidence"]
+        .mean()
+        .sort_values(ascending=False)
+    )
+else:
+    print("⚠️ WARNING: No data was fetched from PSX Toolkit. DataFrame is empty.")
+    sector_rank = pd.Series(dtype=float)
 
 print("\n=== SECTOR RANKING ===")
 print(sector_rank)
