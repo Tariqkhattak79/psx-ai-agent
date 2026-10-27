@@ -1,4 +1,4 @@
-﻿import pandas as pd
+import pandas as pd
 import json
 import os
 import ssl
@@ -146,7 +146,7 @@ def calculate_position_size(row, current_portfolio, risk_per_trade, max_position
     held = row["Symbol"] in current_portfolio
     if held:
         held_buy = current_portfolio[row["Symbol"]]["BuyPrice"]
-        if row.get("LivePrice", entry) <= held_buy * 0.90: return (0, round(actual_risk, 2), "EXIT — LOSS LIMIT")
+        if row.get("LivePrice", entry) <= held_buy * 0.90: return (0, round(actual_risk, 2), "EXIT � LOSS LIMIT")
         if row.get("LivePrice", entry) < held_buy and row["Signal"] in ["BUY", "STRONG BUY"]: return (shares, round(actual_risk, 2), f"ADD {shares} SHARES")
         return (0, 0, "HOLD")
     if row["Signal"] in ["BUY", "STRONG BUY"]:
@@ -180,7 +180,7 @@ def fetch_from_supabase():
 # MAIN EXECUTION
 # ==================================
 def main():
-    print("🚀 Starting PSX AI Agent...")
+    print("?? Starting PSX AI Agent...")
     
     # 1. Load Portfolio
     _sd = fetch_from_supabase()
@@ -205,7 +205,7 @@ def main():
 
     # 2. Fetch Data
     symbols = pd.read_csv("symbols.csv")["Symbol"].tolist()
-    print(f"📡 Fetching {len(symbols)} symbols (parallel)...")
+    print(f"?? Fetching {len(symbols)} symbols (parallel)...")
     FETCH_CACHE = {}
     with ThreadPoolExecutor(max_workers=5) as ex:
         futures = {ex.submit(fetch_one, s): s for s in symbols}
@@ -214,7 +214,7 @@ def main():
             FETCH_CACHE[sym] = (d, lp)
     
     valid_count = sum(1 for s, (d, lp) in FETCH_CACHE.items() if d is not None)
-    print(f"📡 Fetch done ({len(FETCH_CACHE)}/{len(symbols)}) - {valid_count} valid.")
+    print(f"?? Fetch done ({len(FETCH_CACHE)}/{len(symbols)}) - {valid_count} valid.")
 
     # 3. Process & Calculate
     results = []
@@ -280,7 +280,7 @@ def main():
 
     df = pd.DataFrame(results)
     if df.empty:
-        print("❌ No data processed. Exiting.")
+        print("? No data processed. Exiting.")
         return
 
     # 4. Sizing & Actions
@@ -295,15 +295,36 @@ def main():
     # 5. Save Reports
     df.to_excel("psx_report.xlsx", index=False)
     df.to_json("psx_report.json", orient="records", indent=4)
-    print("✅ Reports saved.")
+    print("? Reports saved.")
 
     # 6. Email (Only at 3:30 PM)
+    # ==================================
+    # SAVE REPORTS & ACTIONS (Fixes pathspec error)
+    # ==================================
+    df.to_json("psx_report.json", orient="records", indent=4)
+    
+    actions_payload = {
+        "generated": datetime.now().isoformat(),
+        "buy_now": [],
+        "ready": [],
+        "wait": [],
+        "exit": [],
+        "watch": [],
+        "portfolio": [],
+        "portfolio_holdings": [],
+        "report": results
+    }
+    with open("psx_actions.json", "w") as f:
+        json.dump(actions_payload, f, indent=4)
+        
+    print("? Reports and Actions JSON saved!")
     now = datetime.now()
     if (now.hour == 15 and now.minute >= 30) or (now.hour == 15 and now.minute <= 45):
-        print("📧 Sending email...")
+        print("?? Sending email...")
         # (Your existing email logic can be inserted here)
     else:
-        print("⏭️ Skipping email (waiting for 3:30 PM).")
+        print("?? Skipping email (waiting for 3:30 PM).")
 
 if __name__ == "__main__":
     main()
+
