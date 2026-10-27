@@ -1036,7 +1036,7 @@ def fetch_one(symbol):
         warnings.filterwarnings("ignore")
 
         # Download data using the working Wyckoff method
-        df = pt.download(symbol, period="400d")
+        df = pt.download(symbol, period="400d", show_progress=False)
         
         if df is not None and not df.empty:
             # Flatten multi-index columns
@@ -2908,6 +2908,7 @@ try:
     print("✅ Run status: ok")
 except Exception as e:
     print(f"⚠️ Could not write status: {e}")
+
 
 
 
