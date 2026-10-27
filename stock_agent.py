@@ -1023,39 +1023,53 @@ for news in news_results:
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def fetch_one(symbol):
-    """Fetch yfinance historical + psxdata live price for one symbol."""
+    '''Fetch historical data using pypsx-toolkit (Wyckoff method).'''
     data = None
     live_price = None
 
     try:
-        tk = yf.Ticker(symbol + ".KA")
-        yf_data = tk.history(period="1y")
-        if yf_data is None or len(yf_data) < 50:
-            yf_data = tk.history(period="3mo")
-        if yf_data is not None and len(yf_data) > 0:
-            data = yf_data
-    except Exception:
-        pass
+        import pypsx_toolkit as pt
+        import warnings
+        warnings.filterwarnings("ignore")
 
-    try:
-        import psxdata
-        psx_df = psxdata.stocks(symbol)
-        if psx_df is not None and len(psx_df) > 0:
-            live_price = round(float(psx_df.iloc[0]["close"]), 2)
-            if data is None:
-                psx_df = psx_df.rename(columns={
-                    "date": "Date",
-                    "open": "Open",
-                    "high": "High",
-                    "low": "Low",
-                    "close": "Close",
-                    "volume": "Volume"
-                })
-                psx_df["Date"] = pd.to_datetime(psx_df["Date"])
-                psx_df = psx_df.sort_values("Date").set_index("Date")
-                data = psx_df[["Open", "High", "Low", "Close", "Volume"]].tail(252)
-    except Exception:
-        pass
+        # Download data using the working Wyckoff method
+        df = pt.download(symbol, period="400d")
+        
+        if df is not None and not df.empty:
+            # Flatten multi-index columns
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.get_level_values(-1)
+                
+            # Reset index (Date) and lowercase columns
+            df = df.reset_index()
+            df.columns = [c.lower() for c in df.columns]
+            
+            # Rename to Title Case for stock_agent.py calculations
+            df = df.rename(columns={
+                "date": "Date",
+                "open": "Open",
+                "high": "High",
+                "low": "Low",
+                "close": "Close",
+                "volume": "Volume"
+            })
+            
+            # Ensure chronological order
+            df["Date"] = pd.to_datetime(df["Date"])
+            df = df.sort_values("Date").set_index("Date")
+            
+            # Drop NaNs
+            df = df.dropna(subset=["Open", "High", "Low", "Close"])
+            
+            # Keep only the columns we need
+            data = df[["Open", "High", "Low", "Close", "Volume"]]
+            
+            # Set live price
+            if not data.empty:
+                live_price = float(data["Close"].iloc[-1])
+
+    except Exception as e:
+        print(f"{symbol} | Toolkit fetch failed: {e}")
 
     return symbol, data, live_price
 
@@ -2891,6 +2905,7 @@ try:
     print("✅ Run status: ok")
 except Exception as e:
     print(f"⚠️ Could not write status: {e}")
+
 
 
 
