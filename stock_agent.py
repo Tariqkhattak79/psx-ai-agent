@@ -146,7 +146,7 @@ def calculate_position_size(row, current_portfolio, risk_per_trade, max_position
     held = row["Symbol"] in current_portfolio
     if held:
         held_buy = current_portfolio[row["Symbol"]]["BuyPrice"]
-        if row.get("LivePrice", entry) <= held_buy * 0.90: return (0, round(actual_risk, 2), "EXIT — LOSS LIMIT")
+        if row.get("LivePrice", entry) <= held_buy * 0.90: return (0, round(actual_risk, 2), "EXIT ï¿½ LOSS LIMIT")
         if row.get("LivePrice", entry) < held_buy and row["Signal"] in ["BUY", "STRONG BUY"]: return (shares, round(actual_risk, 2), f"ADD {shares} SHARES")
         return (0, 0, "HOLD")
     if row["Signal"] in ["BUY", "STRONG BUY"]:
