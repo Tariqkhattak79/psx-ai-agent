@@ -38,6 +38,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add portfolio_history.csv portfolio_value_history.csv signal_history.csv psx_actions.json psx_report.json last_run_status.json
+          # Force add the files even if they are in .gitignore
+          git add -f portfolio_history.csv portfolio_value_history.csv signal_history.csv psx_actions.json psx_report.json last_run_status.json
           git commit -m "Automated update: Signals and Portfolio" || echo "No changes to commit"
           git push
