@@ -1029,7 +1029,10 @@ def fetch_one(symbol):
     live_price = None
 
     try:
-        yf_data = yf.Ticker(symbol + ".KA").history(period="1y")
+        tk = yf.Ticker(symbol + ".KA")
+        yf_data = tk.history(period="1y")
+        if yf_data is None or len(yf_data) < 50:
+            yf_data = tk.history(period="3mo")
         if yf_data is not None and len(yf_data) > 0:
             data = yf_data
     except Exception:
@@ -1060,7 +1063,7 @@ def fetch_one(symbol):
 
 FETCH_CACHE = {}
 print(f"📡 Fetching {len(symbols)} symbols in parallel...")
-with ThreadPoolExecutor(max_workers=2) as ex:
+with ThreadPoolExecutor(max_workers=4) as ex:
     futures = {ex.submit(fetch_one, s): s for s in symbols}
     for fut in as_completed(futures):
         try:
