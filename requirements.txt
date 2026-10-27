@@ -1,6 +1,5 @@
-yfinance
+pypsx-toolkit
 pandas
 openpyxl
 python-dotenv
 requests
-psxdata
