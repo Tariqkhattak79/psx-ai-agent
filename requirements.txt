@@ -1,3 +1,4 @@
+yfinance
 pypsx-toolkit
 pandas
 openpyxl
