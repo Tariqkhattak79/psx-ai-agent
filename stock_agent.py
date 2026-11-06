@@ -1,16 +1,15 @@
 import pandas as pd
 import json
 import os
-import ssl
-import urllib.request
-import xml.etree.ElementTree as ET
 import requests
 import smtplib
+import time
 from email.message import EmailMessage
 from dotenv import load_dotenv
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import pypsx_toolkit as pt
+import yfinance as yf
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -76,6 +75,8 @@ def calc_patterns(data, current_vol, avg_vol, rsi, ma20):
 def fetch_one(symbol):
     data = None
     live_price = None
+    
+    # Try pypsx_toolkit first
     try:
         df = pt.download(symbol, period="400d", show_progress=False)
         if df is not None and not df.empty:
@@ -96,6 +97,21 @@ def fetch_one(symbol):
                 live_price = float(data["Close"].iloc[-1])
     except Exception:
         pass
+    
+    # Fallback to yfinance if pypsx failed or returned empty
+    if data is None or data.empty:
+        try:
+            time.sleep(0.5) # Small delay to prevent yfinance rate limit
+            ticker = yf.Ticker(f"{symbol}.KA")
+            df = ticker.history(period="400d")
+            if df is not None and not df.empty:
+                df = df.dropna(subset=["Open", "High", "Low", "Close"])
+                data = df[["Open", "High", "Low", "Close", "Volume"]]
+                if not data.empty:
+                    live_price = float(data["Close"].iloc[-1])
+        except Exception:
+            pass
+
     return symbol, data, live_price
 
 def calculate_position_size(row, current_portfolio, risk_per_trade, max_position_pkr):
@@ -126,8 +142,16 @@ def upload_to_supabase(actions_data, report_data):
         url = f"{SUPABASE_URL}/rest/v1/signals"
         headers = {"apikey": SUPABASE_SECRET, "Authorization": f"Bearer {SUPABASE_SECRET}", "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates,return=representation"}
         payload = {"user_id": USER_ID, "data": {"generated": actions_data.get("generated"), "actions": actions_data, "report": report_data}}
-        return requests.post(url, headers=headers, json=payload).status_code in [200, 201]
-    except: return False
+        res = requests.post(url, headers=headers, json=payload)
+        if res.status_code in [200, 201]:
+            print(f"☁️ Uploaded to Supabase for user: {USER_ID}")
+            return True
+        else:
+            print(f"⚠️ Supabase upload failed: {res.status_code} - {res.text}")
+            return False
+    except Exception as e:
+        print(f"⚠️ Supabase upload error: {e}")
+        return False
 
 def fetch_from_supabase():
     if not SUPABASE_URL or not SUPABASE_SECRET: return {}
@@ -161,7 +185,10 @@ def main():
     MAX_POSITION_PKR = TOTAL_INVESTMENT * 0.10
     current_portfolio_map = {r["Symbol"]: {"Shares": float(r["Shares"]), "BuyPrice": float(r["BuyPrice"])} for _, r in portfolio.iterrows()}
 
-    symbols = pd.read_csv("symbols.csv")["Symbol"].tolist()
+    # Remove duplicates if symbols.csv has any
+    symbols_df = pd.read_csv("symbols.csv")
+    symbols = list(dict.fromkeys(symbols_df["Symbol"].tolist()))
+    
     print(f"Fetching {len(symbols)} symbols...")
     FETCH_CACHE = {}
     with ThreadPoolExecutor(max_workers=5) as ex:
@@ -241,7 +268,6 @@ def main():
     df.to_excel("psx_report.xlsx", index=False)
     df.to_json("psx_report.json", orient="records", indent=4)
     
-    # --- NEW LOGIC TO POPULATE THE APP DASHBOARD ---
     held_symbols = {
         r["Symbol"]: {"BuyPrice": float(r["BuyPrice"]), "Shares": int(r["Shares"])}
         for _, r in portfolio.iterrows()
@@ -272,7 +298,6 @@ def main():
         sym = r["Symbol"]
         reasons, conf = evaluate_reasons(r)
 
-        # EXIT check first
         if sym in held_symbols:
             live_p = r.get("LivePrice")
             if live_p is None: live_p = r["Close"]
@@ -286,7 +311,6 @@ def main():
                 })
                 continue
 
-        # BUY NOW
         if sig in ("BUY", "STRONG BUY") and rsi < 70 and len(reasons) >= 2:
             buy_now.append({
                 "Symbol": sym, "Price": round(r["Close"], 2), "Shares": int(r["PositionSize"]),
@@ -294,7 +318,6 @@ def main():
             })
             continue
 
-        # WAIT FOR PULLBACK
         if sig in ("BUY", "STRONG BUY"):
             wait_list.append({
                 "Symbol": sym, "BuyZone": f"BUY {r['Support5d']:.2f} - {r['Close']*1.02:.2f}",
@@ -302,7 +325,6 @@ def main():
             })
             continue
 
-        # WATCH
         if sig in ("WATCH", "HOLD"):
             watch_list.append({"Symbol": sym, "Signal": sig, "RSI": rsi, "Confidence": conf})
 
@@ -320,14 +342,12 @@ def main():
         "portfolio_holdings": [],
         "report": results
     }
-    # ------------------------------------------------
 
     with open("psx_actions.json", "w") as f:
         json.dump(actions_payload, f, indent=4)
         
     print("Reports and Actions saved.")
 
-    # Upload to Supabase (if configured in env)
     upload_to_supabase(actions_payload, results)
 
     now = datetime.now()
