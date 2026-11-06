@@ -1,4 +1,4 @@
-﻿import pandas as pd
+import pandas as pd
 import json
 import os
 import ssl
@@ -241,21 +241,94 @@ def main():
     df.to_excel("psx_report.xlsx", index=False)
     df.to_json("psx_report.json", orient="records", indent=4)
     
+    # --- NEW LOGIC TO POPULATE THE APP DASHBOARD ---
+    held_symbols = {
+        r["Symbol"]: {"BuyPrice": float(r["BuyPrice"]), "Shares": int(r["Shares"])}
+        for _, r in portfolio.iterrows()
+    }
+
+    buy_now = []
+    wait_list = []
+    exit_list = []
+    watch_list = []
+
+    def evaluate_reasons(r):
+        reasons = []
+        if r.get("BreakoutStatus") in ("MEDIUM BREAKOUT", "STRONG BREAKOUT", "EXPLOSIVE BREAKOUT"): 
+            reasons.append(r["BreakoutStatus"])
+        if r.get("VolumeStatus") in ("VOLUME SPIKE", "HIGH VOLUME"): 
+            reasons.append(f"Volume: {r['VolumeStatus']}")
+        if r.get("BullishDivergence") == "YES": 
+            reasons.append("Bullish divergence")
+        if "Accumulation" in str(r.get("Pattern", "")): 
+            reasons.append("Accumulation")
+        
+        confidence = min(len(reasons) * 25, 100)
+        return reasons, confidence
+
+    for _, r in df.iterrows():
+        sig = r["Signal"]
+        rsi = r["RSI"]
+        sym = r["Symbol"]
+        reasons, conf = evaluate_reasons(r)
+
+        # EXIT check first
+        if sym in held_symbols:
+            live_p = r.get("LivePrice")
+            if live_p is None: live_p = r["Close"]
+            pl = ((live_p - held_symbols[sym]["BuyPrice"]) / held_symbols[sym]["BuyPrice"]) * 100
+            
+            if str(r["PositionAction"]).startswith("EXIT") or pl <= -15:
+                exit_list.append({
+                    "Symbol": sym, "Price": live_p, 
+                    "LossPct": round(pl, 2), 
+                    "Reason": r["PositionAction"] if str(r["PositionAction"]).startswith("EXIT") else "Heavy loss"
+                })
+                continue
+
+        # BUY NOW
+        if sig in ("BUY", "STRONG BUY") and rsi < 70 and len(reasons) >= 2:
+            buy_now.append({
+                "Symbol": sym, "Price": round(r["Close"], 2), "Shares": int(r["PositionSize"]),
+                "Target1": r["Target1"], "StopLoss": r["StopLoss"], "Confidence": conf, "Reasons": reasons
+            })
+            continue
+
+        # WAIT FOR PULLBACK
+        if sig in ("BUY", "STRONG BUY"):
+            wait_list.append({
+                "Symbol": sym, "BuyZone": f"BUY {r['Support5d']:.2f} - {r['Close']*1.02:.2f}",
+                "Confidence": conf, "Reasons": reasons if reasons else ["No strong confirmation yet"]
+            })
+            continue
+
+        # WATCH
+        if sig in ("WATCH", "HOLD"):
+            watch_list.append({"Symbol": sym, "Signal": sig, "RSI": rsi, "Confidence": conf})
+
+    buy_now.sort(key=lambda x: -x["Confidence"])
+    wait_list.sort(key=lambda x: -x["Confidence"])
+
     actions_payload = {
         "generated": datetime.now().isoformat(),
-        "buy_now": [],
+        "buy_now": buy_now,
         "ready": [],
-        "wait": [],
-        "exit": [],
-        "watch": [],
+        "wait": wait_list,
+        "exit": exit_list,
+        "watch": watch_list,
         "portfolio": [],
         "portfolio_holdings": [],
         "report": results
     }
+    # ------------------------------------------------
+
     with open("psx_actions.json", "w") as f:
         json.dump(actions_payload, f, indent=4)
         
     print("Reports and Actions saved.")
+
+    # Upload to Supabase (if configured in env)
+    upload_to_supabase(actions_payload, results)
 
     now = datetime.now()
     if (now.hour == 15 and now.minute >= 30) or (now.hour == 15 and now.minute <= 45):
