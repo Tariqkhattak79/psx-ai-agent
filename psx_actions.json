@@ -1,54 +1,104 @@
 {
-    "generated": "2026-11-06T06:46:06.961698",
+    "generated": "2026-11-06T10:37:39.369003",
     "buy_now": [],
     "ready": [],
-    "wait": [],
+    "wait": [
+        {
+            "Symbol": "NRL",
+            "BuyZone": "BUY 470.00 - 560.83",
+            "Confidence": 25,
+            "Reasons": [
+                "Volume: VOLUME SPIKE"
+            ]
+        },
+        {
+            "Symbol": "OGDC",
+            "BuyZone": "BUY 300.00 - 319.67",
+            "Confidence": 0,
+            "Reasons": [
+                "No strong confirmation yet"
+            ]
+        },
+        {
+            "Symbol": "PRL",
+            "BuyZone": "BUY 34.09 - 35.34",
+            "Confidence": 0,
+            "Reasons": [
+                "No strong confirmation yet"
+            ]
+        }
+    ],
     "exit": [],
-    "watch": [],
+    "watch": [
+        {
+            "Symbol": "ATRL",
+            "Signal": "HOLD",
+            "RSI": 73.12,
+            "Confidence": 25
+        },
+        {
+            "Symbol": "PSO",
+            "Signal": "HOLD",
+            "RSI": 42.32,
+            "Confidence": 0
+        },
+        {
+            "Symbol": "MARI",
+            "Signal": "HOLD",
+            "RSI": 67.17,
+            "Confidence": 0
+        },
+        {
+            "Symbol": "PPL",
+            "Signal": "HOLD",
+            "RSI": 49.28,
+            "Confidence": 0
+        },
+        {
+            "Symbol": "POL",
+            "Signal": "HOLD",
+            "RSI": 35.09,
+            "Confidence": 0
+        },
+        {
+            "Symbol": "CNERGY",
+            "Signal": "HOLD",
+            "RSI": 49.75,
+            "Confidence": 0
+        },
+        {
+            "Symbol": "APL",
+            "Signal": "HOLD",
+            "RSI": 49.27,
+            "Confidence": 0
+        }
+    ],
     "portfolio": [],
     "portfolio_holdings": [],
     "report": [
         {
-            "Symbol": "PSO",
-            "Close": 359.0,
-            "LivePrice": 359.0,
-            "RSI": 43.52,
+            "Symbol": "OGDC",
+            "Close": 313.4,
+            "LivePrice": 313.4,
+            "RSI": 67.56,
             "Signal": "BUY",
             "Score": 2,
-            "VolumeStatus": "LOW VOLUME",
-            "BreakoutStatus": "NO BREAKOUT",
-            "BullishDivergence": "NO",
-            "BearishDivergence": "NO",
-            "Pattern": "",
-            "StopLoss": 336.23,
-            "Target1": 383.74,
-            "Target2": 400.22,
-            "Support5d": 345.01,
-            "Resistance10d": 370.18
-        },
-        {
-            "Symbol": "PPL",
-            "Close": 218.6,
-            "LivePrice": 218.6,
-            "RSI": 49.64,
-            "Signal": "HOLD",
-            "Score": 1,
-            "VolumeStatus": "LOW VOLUME",
+            "VolumeStatus": "NORMAL VOLUME",
             "BreakoutStatus": "NEAR BREAKOUT",
             "BullishDivergence": "NO",
             "BearishDivergence": "NO",
             "Pattern": "",
-            "StopLoss": 206.45,
-            "Target1": 230.13,
-            "Target2": 237.82,
-            "Support5d": 210.04,
-            "Resistance10d": 222.4
+            "StopLoss": 296.59,
+            "Target1": 328.67,
+            "Target2": 338.84,
+            "Support5d": 300.0,
+            "Resistance10d": 317.8
         },
         {
             "Symbol": "POL",
-            "Close": 660.02,
-            "LivePrice": 660.02,
-            "RSI": 33.69,
+            "Close": 661.99,
+            "LivePrice": 661.99,
+            "RSI": 35.09,
             "Signal": "HOLD",
             "Score": 0,
             "VolumeStatus": "LOW VOLUME",
@@ -56,17 +106,17 @@
             "BullishDivergence": "NO",
             "BearishDivergence": "NO",
             "Pattern": "",
-            "StopLoss": 625.97,
-            "Target1": 689.39,
-            "Target2": 708.97,
+            "StopLoss": 627.68,
+            "Target1": 691.79,
+            "Target2": 711.65,
             "Support5d": 657.6,
             "Resistance10d": 690.0
         },
         {
             "Symbol": "MARI",
-            "Close": 656.7,
-            "LivePrice": 656.7,
-            "RSI": 69.57,
+            "Close": 654.03,
+            "LivePrice": 654.03,
+            "RSI": 67.17,
             "Signal": "HOLD",
             "Score": 1,
             "VolumeStatus": "LOW VOLUME",
@@ -74,29 +124,47 @@
             "BullishDivergence": "NO",
             "BearishDivergence": "NO",
             "Pattern": "",
-            "StopLoss": 619.15,
-            "Target1": 693.51,
-            "Target2": 718.05,
+            "StopLoss": 616.56,
+            "Target1": 690.84,
+            "Target2": 715.38,
             "Support5d": 629.01,
             "Resistance10d": 678.0
         },
         {
-            "Symbol": "PRL",
-            "Close": 60.14,
-            "LivePrice": 60.14,
-            "RSI": 84.67,
+            "Symbol": "PPL",
+            "Close": 218.35,
+            "LivePrice": 218.35,
+            "RSI": 49.28,
             "Signal": "HOLD",
-            "Score": 2,
+            "Score": 1,
             "VolumeStatus": "LOW VOLUME",
             "BreakoutStatus": "NEAR BREAKOUT",
             "BullishDivergence": "NO",
             "BearishDivergence": "NO",
             "Pattern": "",
-            "StopLoss": 53.47,
-            "Target1": 70.18,
-            "Target2": 76.87,
-            "Support5d": 53.9,
-            "Resistance10d": 61.0
+            "StopLoss": 206.17,
+            "Target1": 229.96,
+            "Target2": 237.69,
+            "Support5d": 210.04,
+            "Resistance10d": 222.4
+        },
+        {
+            "Symbol": "PSO",
+            "Close": 356.82,
+            "LivePrice": 356.82,
+            "RSI": 42.32,
+            "Signal": "HOLD",
+            "Score": 1,
+            "VolumeStatus": "LOW VOLUME",
+            "BreakoutStatus": "NO BREAKOUT",
+            "BullishDivergence": "NO",
+            "BearishDivergence": "NO",
+            "Pattern": "",
+            "StopLoss": 334.11,
+            "Target1": 381.58,
+            "Target2": 398.08,
+            "Support5d": 345.01,
+            "Resistance10d": 370.18
         },
         {
             "Symbol": "NRL",
@@ -118,27 +186,27 @@
         },
         {
             "Symbol": "ATRL",
-            "Close": 1088.78,
-            "LivePrice": 1088.78,
-            "RSI": 34.5,
+            "Close": 1197.49,
+            "LivePrice": 1197.49,
+            "RSI": 73.12,
             "Signal": "HOLD",
-            "Score": 1,
-            "VolumeStatus": "NORMAL VOLUME",
-            "BreakoutStatus": "NO BREAKOUT",
+            "Score": 2,
+            "VolumeStatus": "VOLUME SPIKE",
+            "BreakoutStatus": "NEAR BREAKOUT",
             "BullishDivergence": "NO",
-            "BearishDivergence": "NO",
-            "Pattern": "Distribution",
-            "StopLoss": 1021.65,
-            "Target1": 1208.33,
-            "Target2": 1288.04,
-            "Support5d": 1074.74,
-            "Resistance10d": 1250.0
+            "BearishDivergence": "YES",
+            "Pattern": "",
+            "StopLoss": 1070.69,
+            "Target1": 1384.86,
+            "Target2": 1509.77,
+            "Support5d": 1082.0,
+            "Resistance10d": 1206.0
         },
         {
-            "Symbol": "CNERGY",
-            "Close": 8.12,
-            "LivePrice": 8.12,
-            "RSI": 59.24,
+            "Symbol": "PRL",
+            "Close": 34.65,
+            "LivePrice": 34.65,
+            "RSI": 32.62,
             "Signal": "BUY",
             "Score": 2,
             "VolumeStatus": "LOW VOLUME",
@@ -146,29 +214,47 @@
             "BullishDivergence": "NO",
             "BearishDivergence": "NO",
             "Pattern": "",
-            "StopLoss": 7.46,
-            "Target1": 9.22,
-            "Target2": 9.94,
-            "Support5d": 7.85,
-            "Resistance10d": 8.94
+            "StopLoss": 32.41,
+            "Target1": 37.39,
+            "Target2": 39.22,
+            "Support5d": 34.09,
+            "Resistance10d": 36.15
         },
         {
-            "Symbol": "OGDC",
-            "Close": 315.35,
-            "LivePrice": 315.35,
-            "RSI": 71.05,
+            "Symbol": "CNERGY",
+            "Close": 6.54,
+            "LivePrice": 6.54,
+            "RSI": 49.75,
             "Signal": "HOLD",
-            "Score": 1,
+            "Score": 0,
             "VolumeStatus": "LOW VOLUME",
-            "BreakoutStatus": "NEAR BREAKOUT",
+            "BreakoutStatus": "NO BREAKOUT",
             "BullishDivergence": "NO",
             "BearishDivergence": "NO",
             "Pattern": "",
-            "StopLoss": 298.49,
-            "Target1": 330.61,
-            "Target2": 340.78,
-            "Support5d": 300.0,
-            "Resistance10d": 317.8
+            "StopLoss": 6.0,
+            "Target1": 7.24,
+            "Target2": 7.71,
+            "Support5d": 6.25,
+            "Resistance10d": 7.15
+        },
+        {
+            "Symbol": "APL",
+            "Close": 514.93,
+            "LivePrice": 514.93,
+            "RSI": 49.27,
+            "Signal": "HOLD",
+            "Score": 0,
+            "VolumeStatus": "LOW VOLUME",
+            "BreakoutStatus": "NO BREAKOUT",
+            "BullishDivergence": "NO",
+            "BearishDivergence": "NO",
+            "Pattern": "",
+            "StopLoss": 488.61,
+            "Target1": 574.79,
+            "Target2": 614.7,
+            "Support5d": 514.0,
+            "Resistance10d": 541.0
         }
     ]
 }
